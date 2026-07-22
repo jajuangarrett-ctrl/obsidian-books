@@ -70,7 +70,10 @@ export default class ObsidianBooksPlugin extends Plugin {
 		this.addSettingTab(new ReaderSettingTab(this.app, this));
 
 		this.registerEvent(
-			this.app.workspace.on('active-leaf-change', (leaf) => this.applyImmersive(leaf)),
+			this.app.workspace.on('active-leaf-change', (leaf) => {
+				this.applyImmersive(leaf);
+				if (leaf?.view instanceof BookshelfView) void leaf.view.refresh();
+			}),
 		);
 		this.registerEvent(
 			this.app.vault.on('rename', (file, oldPath) => this.handleRename(file, oldPath)),
