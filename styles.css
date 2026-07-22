@@ -26,6 +26,44 @@
 	outline-offset: -3px;
 }
 
+.books-viewport.books-vertical-mode {
+	display: block;
+	overflow-x: hidden;
+	overflow-y: auto;
+	scroll-behavior: auto;
+}
+
+.books-vertical-mode .books-chapterbar {
+	position: sticky;
+	top: 0;
+	left: auto;
+	margin: 0 auto;
+	transform: none;
+}
+
+.books-vertical-mode .books-stage {
+	height: auto;
+	min-height: 100%;
+	overflow: visible;
+}
+
+.books-vertical-mode .books-content {
+	height: auto;
+	min-height: 100%;
+	column-count: 1;
+	column-width: auto;
+	will-change: auto;
+}
+
+.books-vertical-mode .books-nav-button {
+	display: none;
+}
+
+.books-vertical-mode .books-statusbar {
+	position: sticky;
+	bottom: 0;
+}
+
 .books-stage {
 	position: relative;
 	box-sizing: border-box;

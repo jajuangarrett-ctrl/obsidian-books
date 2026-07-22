@@ -493,6 +493,83 @@ export class ReaderView extends ItemView {
 		this.updateStatus();
 	}
 
+	private detectVerticalFallback(): boolean {
+		const availableHeight = Math.max(1, this.viewport.clientHeight - 110);
+		const blocks: FallbackBlockMeasurement[] = [];
+		const seen = new Set<Element>();
+		const add = (element: Element, kind: FallbackBlockMeasurement['kind']): void => {
+			if (seen.has(element)) return;
+			seen.add(element);
+			const scrollHeight = element.instanceOf(HTMLElement) ? element.scrollHeight : 0;
+			blocks.push({
+				kind,
+				height: Math.max(scrollHeight, element.getBoundingClientRect().height),
+			});
+		};
+
+		this.content
+			.querySelectorAll('.pdf-embed, embed[type="application/pdf"], iframe[src*=".pdf"]')
+			.forEach((element) => add(element, 'pdf'));
+		this.content
+			.querySelectorAll('iframe, video, audio, canvas, .internal-embed')
+			.forEach((element) => add(element, 'interactive'));
+		this.content
+			.querySelectorAll('pre, table, figure, img, svg, .math-block')
+			.forEach((element) => add(element, 'unbreakable'));
+
+		return verticalFallbackReason(availableHeight, blocks) !== null;
+	}
+
+	private setVerticalMode(enabled: boolean): void {
+		this.verticalMode = enabled;
+		this.viewport.toggleClass('books-vertical-mode', enabled);
+		if (enabled) return;
+		this.stage.style.removeProperty('height');
+		this.stage.style.removeProperty('min-height');
+		this.content.style.removeProperty('height');
+		this.content.style.removeProperty('column-count');
+		this.content.style.removeProperty('max-width');
+		this.viewport.scrollTop = 0;
+	}
+
+	private measureVertical(viewportWidth: number): void {
+		this.setVerticalMode(true);
+		const availableWidth = Math.max(
+			240,
+			viewportWidth - this.booksPlugin.settings.pageMargin * 2,
+		);
+		const maxWidth = this.booksPlugin.settings.maxPageWidth;
+		const contentWidth = maxWidth > 0 ? Math.min(availableWidth, maxWidth) : availableWidth;
+		this.stage.removeClass('books-two-page');
+		this.stage.style.width = `${contentWidth}px`;
+		this.stage.style.height = 'auto';
+		this.stage.style.minHeight = '100%';
+		this.content.style.width = '100%';
+		this.content.style.maxWidth = '100%';
+		this.content.style.height = 'auto';
+		this.content.style.columnWidth = 'auto';
+		this.content.style.columnCount = '1';
+		this.content.style.transform = 'none';
+		this.page = 0;
+		this.totalPages = 1;
+		this.pageStride = 0;
+		this.measured = true;
+
+		const fraction = this.pendingFraction ?? this.currentFraction();
+		this.pendingFraction = null;
+		this.animationFrame = this.contentEl.win.requestAnimationFrame(() => {
+			this.animationFrame = null;
+			this.restoreVerticalFraction(fraction);
+		});
+	}
+
+	private restoreVerticalFraction(fraction: number): void {
+		if (!this.verticalMode) return;
+		const maximum = Math.max(0, this.viewport.scrollHeight - this.viewport.clientHeight);
+		this.viewport.scrollTop = maximum * Math.max(0, Math.min(fraction, 1));
+		this.updateStatus();
+	}
+
 	private applyTransform(): void {
 		if (this.verticalMode) {
 			this.content.style.transform = 'none';
@@ -518,11 +595,34 @@ export class ReaderView extends ItemView {
 	}
 
 	private next(): void {
+		if (this.verticalMode) {
+			const maximum = Math.max(0, this.viewport.scrollHeight - this.viewport.clientHeight);
+			if (this.viewport.scrollTop < maximum - 2) {
+				this.viewport.scrollTop = Math.min(
+					maximum,
+					this.viewport.scrollTop + this.viewport.clientHeight * 0.85,
+				);
+				return;
+			}
+			void this.changeChapter(1, 0);
+			return;
+		}
 		if (this.page < this.totalPages - 1) this.goTo(this.page + 1);
 		else void this.changeChapter(1, 0);
 	}
 
 	private previous(): void {
+		if (this.verticalMode) {
+			if (this.viewport.scrollTop > 2) {
+				this.viewport.scrollTop = Math.max(
+					0,
+					this.viewport.scrollTop - this.viewport.clientHeight * 0.85,
+				);
+				return;
+			}
+			void this.changeChapter(-1, 1);
+			return;
+		}
 		if (this.page > 0) this.goTo(this.page - 1);
 		else void this.changeChapter(-1, 1);
 	}
@@ -542,8 +642,10 @@ export class ReaderView extends ItemView {
 	private updateStatus(): void {
 		const current = this.page + 1;
 		const chapterIndex = this.currentChapterIndex();
-		const label =
-			this.book && this.book.chapters.length > 1 && chapterIndex >= 0
+		const fraction = this.currentFraction();
+		const label = this.verticalMode
+			? scrollStatus(Math.round(fraction * 100))
+			: this.book && this.book.chapters.length > 1 && chapterIndex >= 0
 				? chapterStatus(
 						chapterIndex + 1,
 						this.book.chapters.length,
@@ -551,27 +653,44 @@ export class ReaderView extends ItemView {
 						this.totalPages,
 					)
 				: pageStatus(current, this.totalPages);
-		const remainingPages = Math.max(1, this.totalPages - this.page);
+		const remainingPages = this.verticalMode
+			? Math.max(0.01, 1 - fraction)
+			: Math.max(1, this.totalPages - this.page);
 		const remainingMinutes = Math.max(
 			1,
-			Math.ceil((this.chapterMinutes * remainingPages) / this.totalPages),
+			Math.ceil(
+				this.verticalMode
+					? this.chapterMinutes * remainingPages
+					: (this.chapterMinutes * remainingPages) / this.totalPages,
+			),
 		);
 		this.statusText.setText(`${label} · ${minutesLeft(remainingMinutes)}`);
-		const percentage = this.totalPages > 0 ? (current / this.totalPages) * 100 : 0;
+		const percentage = this.verticalMode
+			? fraction * 100
+			: this.totalPages > 0
+				? (current / this.totalPages) * 100
+				: 0;
 		this.progressFill.style.width = `${percentage}%`;
 		const progress = this.progressFill.parentElement;
-		progress?.setAttribute('aria-valuemax', String(this.totalPages));
-		progress?.setAttribute('aria-valuenow', String(current));
+		progress?.setAttribute('aria-valuemax', String(this.verticalMode ? 100 : this.totalPages));
+		progress?.setAttribute(
+			'aria-valuenow',
+			String(this.verticalMode ? Math.round(percentage) : current),
+		);
 		progress?.setAttribute('aria-valuetext', label);
-		this.previousButton.disabled = this.page <= 0 && !this.hasPreviousChapter();
-		this.nextButton.disabled = this.page >= this.totalPages - 1 && !this.hasNextChapter();
+		this.previousButton.disabled = this.verticalMode
+			? fraction <= 0 && !this.hasPreviousChapter()
+			: this.page <= 0 && !this.hasPreviousChapter();
+		this.nextButton.disabled = this.verticalMode
+			? fraction >= 0.999 && !this.hasNextChapter()
+			: this.page >= this.totalPages - 1 && !this.hasNextChapter();
 		this.updateBookmarkButton();
 	}
 
 	private savePosition(): void {
 		if (!this.booksPlugin.settings.rememberPosition || !this.file || !this.measured) return;
 		if (this.pendingFraction !== null) return;
-		const fraction = pageToFraction(this.page, this.totalPages);
+		const fraction = this.currentFraction();
 		this.booksPlugin.positions[this.file.path] = { fraction };
 		if (this.book) this.booksPlugin.updateBookProgress(this.book, this.file.path, fraction);
 	}
@@ -603,7 +722,9 @@ export class ReaderView extends ItemView {
 	}
 
 	private currentFraction(): number {
-		return pageToFraction(this.page, this.totalPages);
+		if (!this.verticalMode) return pageToFraction(this.page, this.totalPages);
+		const maximum = Math.max(0, this.viewport.scrollHeight - this.viewport.clientHeight);
+		return maximum > 0 ? Math.max(0, Math.min(this.viewport.scrollTop / maximum, 1)) : 0;
 	}
 
 	private updateBookmarkButton(): void {
@@ -837,11 +958,15 @@ export class ReaderView extends ItemView {
 					this.measure();
 					return;
 				}
-				const fraction = pageToFraction(this.page, this.totalPages);
+				const fraction = this.currentFraction();
 				this.measure();
-				this.page = fractionToPage(fraction, this.totalPages);
-				this.applyTransform();
-				this.updateStatus();
+				if (this.verticalMode) {
+					this.restoreVerticalFraction(fraction);
+				} else {
+					this.page = fractionToPage(fraction, this.totalPages);
+					this.applyTransform();
+					this.updateStatus();
+				}
 			}, 150);
 		};
 
@@ -850,6 +975,11 @@ export class ReaderView extends ItemView {
 		this.resizeObserver.observe(this.viewport);
 		this.registerEvent(this.app.workspace.on('css-change', repaginate));
 		this.registerEvent(this.app.workspace.on('resize', repaginate));
+		this.registerDomEvent(this.viewport, 'scroll', () => {
+			if (!this.verticalMode) return;
+			this.updateStatus();
+			this.savePosition();
+		});
 	}
 
 	private toggleControls(): void {
@@ -880,8 +1010,14 @@ export class ReaderView extends ItemView {
 		register([], 'PageUp', () => this.previous());
 		register([], ' ', () => this.next());
 		register(['Shift'], ' ', () => this.previous());
-		register([], 'Home', () => this.goTo(0));
-		register([], 'End', () => this.goTo(this.totalPages - 1));
+		register([], 'Home', () => {
+			if (this.verticalMode) this.restoreVerticalFraction(0);
+			else this.goTo(0);
+		});
+		register([], 'End', () => {
+			if (this.verticalMode) this.restoreVerticalFraction(1);
+			else this.goTo(this.totalPages - 1);
+		});
 		register([], 'Escape', () => this.exitReadingChrome());
 		this.readerScope = scope;
 	}
