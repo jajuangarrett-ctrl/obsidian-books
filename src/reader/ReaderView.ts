@@ -1072,11 +1072,9 @@ export class ReaderView extends ItemView {
 
 		event.preventDefault();
 		event.stopPropagation();
-		void this.app.workspace.openLinkText(
-			linkText,
-			this.filePath ?? '',
-			event.metaKey || event.ctrlKey,
-		);
+		// MarkdownRenderer resolves data-href/href to a vault-root path. Passing the
+		// chapter as source again would resolve `Library/Note` as `Library/Library/Note`.
+		void this.app.workspace.openLinkText(linkText, '', event.metaKey || event.ctrlKey);
 	}
 
 	private isScrollable(target: EventTarget | null): boolean {
