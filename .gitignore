@@ -1,8 +1,14 @@
-# Per-user plugin data (reading positions & settings) — not part of the plugin
+# Per-user plugin data
 data.json
 
-# Tooling / OS
+# Tooling and generated files
 node_modules/
+coverage/
+*.map
+
+# Operating-system and editor files
 .DS_Store
 Thumbs.db
 *.log
+.idea/
+.vscode/
