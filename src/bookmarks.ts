@@ -10,7 +10,8 @@ export function findMatchingBookmark(
 ): ReadingBookmark | undefined {
 	return bookmarks.find(
 		(bookmark) =>
-			bookmark.sourcePath === sourcePath && Math.abs(bookmark.fraction - fraction) <= tolerance,
+			bookmark.sourcePath === sourcePath &&
+			Math.abs(bookmark.fraction - fraction) <= tolerance,
 	);
 }
 

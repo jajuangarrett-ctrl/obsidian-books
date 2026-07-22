@@ -69,7 +69,10 @@ export class BookContentsModal extends Modal {
 			const remove = item.createEl('button', {
 				cls: 'books-bookmark-remove',
 				text: t('remove'),
-				attr: { type: 'button', 'aria-label': `${t('removeBookmark')}: ${open.textContent}` },
+				attr: {
+					type: 'button',
+					'aria-label': `${t('removeBookmark')}: ${open.textContent}`,
+				},
 			});
 			remove.addEventListener('click', () => {
 				this.onRemoveBookmark(bookmark.id);

@@ -329,7 +329,10 @@ export class ReaderView extends ItemView {
 		const settings = this.booksPlugin.settings;
 		this.content.style.setProperty('--books-font-size', `${settings.fontSize}em`);
 		this.content.style.setProperty('--books-line-height', String(settings.lineHeight));
-		this.content.style.setProperty('--books-paragraph-spacing', `${settings.paragraphSpacing}em`);
+		this.content.style.setProperty(
+			'--books-paragraph-spacing',
+			`${settings.paragraphSpacing}em`,
+		);
 		this.content.style.setProperty('--books-column-gap', `${settings.columnGap}em`);
 		this.content.removeClass('books-font-theme', 'books-font-serif', 'books-font-sans');
 		this.content.addClass(`books-font-${settings.fontFamily}`);

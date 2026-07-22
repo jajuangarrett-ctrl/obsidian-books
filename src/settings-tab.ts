@@ -2,13 +2,7 @@ import { App, PluginSettingTab, Setting } from 'obsidian';
 
 import type ObsidianBooksPlugin from './main';
 import { t } from './i18n';
-import type {
-	AppearancePreset,
-	FontFamily,
-	OpenMode,
-	PageMode,
-	TransitionMode,
-} from './types';
+import type { AppearancePreset, FontFamily, OpenMode, PageMode, TransitionMode } from './types';
 
 export class ReaderSettingTab extends PluginSettingTab {
 	public constructor(

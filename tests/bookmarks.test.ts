@@ -25,9 +25,6 @@ describe('bookmarks', () => {
 	});
 
 	it('sorts by natural source order and then fraction', () => {
-		expect(sortBookmarks(bookmarks).map((bookmark) => bookmark.id)).toEqual([
-			'start',
-			'later',
-		]);
+		expect(sortBookmarks(bookmarks).map((bookmark) => bookmark.id)).toEqual(['start', 'later']);
 	});
 });
