@@ -542,14 +542,15 @@ export class ReaderView extends ItemView {
 		const contentWidth = maxWidth > 0 ? Math.min(availableWidth, maxWidth) : availableWidth;
 		this.stage.removeClass('books-two-page');
 		this.stage.style.width = `${contentWidth}px`;
-		this.stage.style.height = 'auto';
-		this.stage.style.minHeight = '100%';
-		this.content.style.width = '100%';
-		this.content.style.maxWidth = '100%';
-		this.content.style.height = 'auto';
-		this.content.style.columnWidth = 'auto';
-		this.content.style.columnCount = '1';
-		this.content.style.transform = 'none';
+		this.stage.setCssProps({ height: 'auto', minHeight: '100%' });
+		this.content.setCssProps({
+			width: '100%',
+			maxWidth: '100%',
+			height: 'auto',
+			columnWidth: 'auto',
+			columnCount: '1',
+			transform: 'none',
+		});
 		this.page = 0;
 		this.totalPages = 1;
 		this.pageStride = 0;
@@ -572,7 +573,7 @@ export class ReaderView extends ItemView {
 
 	private applyTransform(): void {
 		if (this.verticalMode) {
-			this.content.style.transform = 'none';
+			this.content.setCssProps({ transform: 'none' });
 			return;
 		}
 		const translateX = calculateTranslation(this.alignmentOffset, this.page, this.pageStride);
