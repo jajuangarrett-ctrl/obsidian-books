@@ -1252,6 +1252,7 @@ export class ReaderView extends ItemView {
 			this.viewport,
 			'wheel',
 			(event) => {
+				if (this.verticalMode) return;
 				if (this.isScrollable(event.target)) return;
 				const delta =
 					Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
