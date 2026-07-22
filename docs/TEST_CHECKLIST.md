@@ -6,14 +6,14 @@ Statuses: **Pass**, **Fail**, **Pending**, or **Physical device required**.
 
 ## Automated validation
 
-| Check             | Status | Current evidence                                                                                                                               |
-| ----------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Format check      | Pass   | `npm run format:check`                                                                                                                         |
-| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                           |
-| Unit tests        | Pass   | 10 tests across pagination geometry, centered-stage translation, normalized position conversion, settings migration, and translation alignment |
-| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                      |
-| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                     |
-| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                   |
+| Check             | Status | Current evidence                                                                                                                                             |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Format check      | Pass   | `npm run format:check`                                                                                                                                       |
+| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                                         |
+| Unit tests        | Pass   | 15 tests across pagination geometry, centered-stage translation, normalized positions, settings migration, book markers, chapter links, and natural ordering |
+| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                                    |
+| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                                   |
+| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                                 |
 
 ## Desktop reader
 
@@ -74,15 +74,15 @@ Statuses: **Pass**, **Fail**, **Pending**, or **Physical device required**.
 
 ## Books and study tools
 
-| Workflow                                    | Status  | Notes                                           |
-| ------------------------------------------- | ------- | ----------------------------------------------- |
-| Single-note book                            | Pending | Baseline reader exists; bookshelf model pending |
-| Folder book with `Book.md`                  | Pending | Not implemented                                 |
-| Ordered chapters and one-chapter loading    | Pending | Not implemented                                 |
-| Covers and metadata                         | Pending | Not implemented                                 |
-| Table of contents and chapter navigation    | Pending | Not implemented                                 |
-| Bookmarks                                   | Pending | Not implemented                                 |
-| Highlights survive repagination             | Pending | Not implemented                                 |
-| Quotes write to each configured destination | Pending | Not implemented                                 |
-| Quote reopens source near passage           | Pending | Not implemented                                 |
-| Source Markdown unchanged by default        | Pending | Not implemented                                 |
+| Workflow                                    | Status  | Notes                                                                                   |
+| ------------------------------------------- | ------- | --------------------------------------------------------------------------------------- |
+| Single-note book                            | Pass    | Recently read stress fixture appears and opens from the bookshelf                       |
+| Folder book with `Book.md`                  | Pass    | Three-chapter dedicated-vault fixture discovered from its manifest                      |
+| Ordered chapters and one-chapter loading    | Pass    | Declared 01/02/10 order preserved; accessibility tree contained only the active chapter |
+| Covers and metadata                         | Pass    | SVG cover, title, author, and chapter count rendered on the shelf                       |
+| Table of contents and chapter navigation    | Pass    | Next/previous boundaries and direct Contents jump passed                                |
+| Bookmarks                                   | Pending | Not implemented                                                                         |
+| Highlights survive repagination             | Pending | Not implemented                                                                         |
+| Quotes write to each configured destination | Pending | Not implemented                                                                         |
+| Quote reopens source near passage           | Pending | Not implemented                                                                         |
+| Source Markdown unchanged by default        | Pending | Not implemented                                                                         |

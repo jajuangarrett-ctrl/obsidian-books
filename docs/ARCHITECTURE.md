@@ -64,8 +64,10 @@ content gestures, and let Obsidian manage its own system chrome and sidebars.
   controls, embedded scrolling, and operating-system edge gestures.
 - `src/reader/content.ts`: Markdown rendering, compatibility classification, and
   scroll fallback decisions.
-- `src/books/*`: book discovery, `Book.md` metadata, chapter order, and one-chapter
-  loading.
+- `src/books/domain.ts`: pure book metadata, marker, link, and natural-order helpers.
+- `src/books/discovery.ts`: vault-backed `Book.md`, single-note, cover, and chapter
+  discovery.
+- `src/bookshelf/BookshelfView.ts`: searchable library cards and progress.
 - `src/annotations/*`: stable anchors, highlight rendering, quote persistence,
   and source reopening.
 - `src/bookshelf/*`: vault book index and bookshelf view.
@@ -80,6 +82,7 @@ The plugin will keep one versioned data document containing:
 
 - Settings.
 - Reading locations keyed by source or book/chapter identity.
+- Current chapter and normalized in-chapter location keyed by book identity.
 - Bookmarks.
 - Highlight anchors and quote destinations.
 - A small bookshelf metadata cache that can be rebuilt from the vault.

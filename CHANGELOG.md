@@ -16,6 +16,11 @@ All notable changes to Obsidian Books will be documented in this file.
   reduced motion, and increased-contrast styles.
 - Input arbitration for text selection, links, controls, scrollable content, and
   operating-system edge gestures.
+- Searchable bookshelf for recently read and explicitly marked single-note books.
+- Folder-book discovery through `Book.md` with title, author, cover, declared
+  chapter order, and numeric-aware fallback ordering.
+- Table of contents, chapter controls, cross-chapter page continuation, and saved
+  book/chapter progress while loading only the active chapter.
 
 ### Changed
 

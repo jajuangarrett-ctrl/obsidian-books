@@ -8,8 +8,8 @@ foundation.
 
 > [!NOTE]
 > Obsidian Books is an early development preview. Single-note reading is working;
-> folder books, the bookshelf, table of contents, bookmarks, annotations, and
-> quote capture are under active development.
+> bookmarks, annotations, quote capture, and advanced compatibility fallbacks are
+> under active development.
 
 ## Current features
 
@@ -29,6 +29,33 @@ foundation.
   operating-system edge gestures out of page-turn handling.
 - Load legacy MD Reader settings and positions when its `data.json` is carried
   into the Obsidian Books plugin folder.
+- Discover recently read or explicitly marked single-note books in a searchable
+  bookshelf.
+- Discover folder books from `Book.md`, including title, author, cover, declared
+  chapter order, and numeric-aware fallback ordering.
+- Render only the active chapter, continue across chapter boundaries, open a
+  table of contents, and resume saved book/chapter progress.
+
+## Folder books
+
+Add `Book.md` to a folder and optionally declare metadata in its frontmatter:
+
+```yaml
+---
+title: The Long Way Home
+author: Ada Reader
+cover: '[[cover.jpg]]'
+chapters:
+  - '[[01 Arrival]]'
+  - '[[02 Crossing]]'
+  - '[[10 Home]]'
+---
+```
+
+When `chapters` is omitted, Markdown files beneath the folder are ordered with
+numeric-aware path sorting. Nested folders with their own `Book.md` stay separate.
+Mark a standalone note with `book: true`, `obsidian-books: true`, or `type: book`
+to keep it on the bookshelf before it has reading history.
 
 ## Open a note
 
@@ -84,9 +111,8 @@ The production bundle is `main.js`; Obsidian also requires `manifest.json` and
 
 ## Known limitations
 
-- The bookshelf, folder-based books, chapter metadata, table of contents,
-  bookmarks, highlights, quotes, and annotation destinations are not implemented
-  yet.
+- Bookmarks, reading-time estimates, highlights, quotes, and annotation
+  destinations are not implemented yet.
 - Very tall or unusually interactive rendered blocks still need the planned
   vertical-flow fallback and full compatibility testing.
 - Mobile and iPad behavior has not yet been validated on a physical iPad.
