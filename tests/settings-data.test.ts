@@ -23,7 +23,7 @@ describe('settings migration', () => {
 			},
 		});
 
-		expect(migrated.schemaVersion).toBe(2);
+		expect(migrated.schemaVersion).toBe(3);
 		expect(migrated.settings).toMatchObject({
 			fontSize: 1.25,
 			lineHeight: 1.8,
@@ -67,6 +67,32 @@ describe('settings migration', () => {
 				fraction: 0,
 			},
 		});
+	});
+
+	it('normalizes persistent bookmarks', () => {
+		const migrated = migratePersistedData({
+			bookmarks: [
+				{
+					id: 'bookmark-1',
+					sourcePath: 'Novel/01 Start.md',
+					bookId: 'folder:Novel/Book.md',
+					fraction: 1.5,
+					createdAt: '2026-07-22T18:00:00.000Z',
+				},
+				{ id: 'bookmark-1', sourcePath: 'duplicate.md', fraction: 0, createdAt: '' },
+				{ id: '', sourcePath: 'broken.md', fraction: 0, createdAt: '' },
+			],
+		});
+
+		expect(migrated.bookmarks).toEqual([
+			{
+				id: 'bookmark-1',
+				sourcePath: 'Novel/01 Start.md',
+				bookId: 'folder:Novel/Book.md',
+				fraction: 1,
+				createdAt: '2026-07-22T18:00:00.000Z',
+			},
+		]);
 	});
 
 	it('uses safe defaults and clamps malformed values', () => {
