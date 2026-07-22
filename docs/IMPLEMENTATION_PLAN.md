@@ -7,8 +7,8 @@ reinstalled, and retested.
 
 Current status: phases 0–4 are complete. Phase 5 is in progress; automated,
 desktop, responsive-viewport, and synthetic-touch passes are recorded in the
-test checklist. Physical iPad and VoiceOver validation and the remaining
-third-party/embed compatibility checks are still open release gates.
+test checklist. Physical iPad and VoiceOver validation plus direct operating-
+system reduced-motion and increased-contrast checks remain open release gates.
 
 ## Phase 0 — Foundation and audit
 

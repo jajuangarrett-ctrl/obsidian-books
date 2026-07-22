@@ -45,6 +45,8 @@ All notable changes to Obsidian Books will be documented in this file.
 - Completed dedicated-vault desktop validation for every launch path, reader
   transition, navigation input, responsive spread, theme and typography extreme,
   bookshelf workflow, bookmark, annotation destination, and vertical fallback.
+- Completed direct compatibility passes with Dataview 0.5.68, Tasks 8.2.2, a
+  rendered PDF, native audio, and native video.
 
 ### Removed
 
