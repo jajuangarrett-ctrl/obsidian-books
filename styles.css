@@ -464,13 +464,23 @@ body.books-immersive.books-chrome-hidden .status-bar {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
+	height: auto;
 	padding: 0;
 	color: var(--text-normal);
 	text-align: left;
+	white-space: normal;
+	appearance: none;
 	cursor: pointer;
 	background: transparent;
 	border: 0;
 	border-radius: var(--radius-m);
+	box-shadow: none;
+}
+
+.books-shelf-card:hover,
+.books-shelf-card:focus-visible {
+	background: transparent;
+	box-shadow: none;
 }
 
 .books-shelf-card:focus-visible {
@@ -481,6 +491,7 @@ body.books-immersive.books-chrome-hidden .status-bar {
 .books-shelf-cover {
 	position: relative;
 	width: 100%;
+	flex: none;
 	aspect-ratio: 2 / 3;
 	overflow: hidden;
 	background: var(--background-secondary);
