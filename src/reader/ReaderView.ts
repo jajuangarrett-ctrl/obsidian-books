@@ -202,7 +202,6 @@ export class ReaderView extends ItemView {
 		this.stage.setAttribute('role', 'main');
 		this.content = this.stage.createDiv({ cls: 'books-content markdown-rendered' });
 		this.content.setAttribute('role', 'article');
-		this.registerDomEvent(this.content, 'click', (event) => this.openInternalLink(event));
 
 		this.previousButton = this.viewport.createEl('button', {
 			cls: 'books-nav-button books-previous books-ui',
@@ -1063,18 +1062,19 @@ export class ReaderView extends ItemView {
 		return target instanceof Element && Boolean(target.closest(INTERACTIVE_SELECTOR));
 	}
 
-	private openInternalLink(event: MouseEvent): void {
-		if (!(event.target instanceof Element)) return;
+	private openInternalLink(event: MouseEvent): boolean {
+		if (!(event.target instanceof Element)) return false;
 		const link = event.target.closest<HTMLAnchorElement>('a.internal-link');
-		if (!link || !this.content.contains(link)) return;
+		if (!link || !this.content.contains(link)) return false;
 		const linkText = link.dataset.href ?? link.getAttribute('href');
-		if (!linkText || linkText.startsWith('#')) return;
+		if (!linkText || linkText.startsWith('#')) return false;
 
 		event.preventDefault();
 		event.stopPropagation();
 		// MarkdownRenderer resolves data-href/href to a vault-root path. Passing the
 		// chapter as source again would resolve `Library/Note` as `Library/Library/Note`.
 		void this.app.workspace.openLinkText(linkText, '', event.metaKey || event.ctrlKey);
+		return true;
 	}
 
 	private isScrollable(target: EventTarget | null): boolean {
@@ -1238,6 +1238,7 @@ export class ReaderView extends ItemView {
 		});
 
 		this.registerDomEvent(this.viewport, 'click', (event) => {
+			if (this.openInternalLink(event)) return;
 			if (this.lastTouchAt && Date.now() - this.lastTouchAt < 700) return;
 			if (
 				this.isInteractive(event.target) ||
