@@ -1,4 +1,5 @@
 import type {
+	BookProgressMap,
 	LegacyData,
 	OpenMode,
 	PageMode,
@@ -89,13 +90,37 @@ export function normalizePositions(value: unknown): PositionMap {
 	return positions;
 }
 
+export function normalizeBookProgress(value: unknown): BookProgressMap {
+	if (!isRecord(value)) return {};
+	const progress: BookProgressMap = {};
+
+	for (const [bookId, position] of Object.entries(value)) {
+		if (
+			!bookId ||
+			!isRecord(position) ||
+			typeof position.chapterPath !== 'string' ||
+			!position.chapterPath ||
+			typeof position.fraction !== 'number'
+		) {
+			continue;
+		}
+		progress[bookId] = {
+			chapterPath: position.chapterPath,
+			fraction: clampFraction(position.fraction),
+		};
+	}
+
+	return progress;
+}
+
 export function migratePersistedData(value: unknown): PersistedData {
 	const candidate = isRecord(value) ? value : {};
 	const hasNestedSettings = isRecord(candidate.settings);
 
 	return {
-		schemaVersion: 1,
+		schemaVersion: 2,
 		settings: normalizeSettings(hasNestedSettings ? candidate.settings : candidate),
 		positions: normalizePositions(candidate.positions),
+		bookProgress: normalizeBookProgress(candidate.bookProgress),
 	};
 }

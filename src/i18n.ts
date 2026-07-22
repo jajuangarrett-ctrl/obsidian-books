@@ -9,6 +9,18 @@ const STRINGS = {
 		needMarkdown: 'Open a Markdown note to read it in Obsidian Books.',
 		commandOpen: 'Open current note in Obsidian Books',
 		menuOpen: 'Open in Obsidian Books',
+		bookshelf: 'Bookshelf',
+		bookshelfDescription: 'Continue reading notes and folder books from your vault.',
+		searchBooks: 'Search books',
+		noBookMatches: 'No books match this search.',
+		emptyBookshelf:
+			'No books yet. Open a note in Obsidian Books, mark a note with book: true, or add Book.md to a folder.',
+		openBook: 'Open book',
+		commandBookshelf: 'Open Obsidian Books bookshelf',
+		ribbonBookshelf: 'Open Obsidian Books bookshelf',
+		contents: 'Contents',
+		previousChapter: 'Previous chapter',
+		nextChapter: 'Next chapter',
 		settingsTitle: 'Obsidian Books',
 		pageMode: 'Page mode',
 		pageModeDescription: 'How many pages to show on screen',
@@ -42,6 +54,10 @@ const STRINGS = {
 		previousPage: 'Previous page',
 		nextPage: 'Next page',
 		pageStatus: (page: number, total: number) => `Page ${page} of ${total}`,
+		chapterCount: (count: number) => `${count} ${count === 1 ? 'chapter' : 'chapters'}`,
+		readingProgress: (fraction: number) => `${Math.round(fraction * 100)}% read`,
+		chapterStatus: (chapter: number, chapters: number, page: number, pages: number) =>
+			`Chapter ${chapter} of ${chapters} · Page ${page} of ${pages}`,
 	},
 	ru: {
 		fallbackTitle: 'Obsidian Books',
@@ -53,6 +69,18 @@ const STRINGS = {
 		needMarkdown: 'Откройте заметку Markdown, чтобы читать её в Obsidian Books.',
 		commandOpen: 'Открыть текущую заметку в Obsidian Books',
 		menuOpen: 'Открыть в Obsidian Books',
+		bookshelf: 'Книжная полка',
+		bookshelfDescription: 'Продолжайте читать заметки и книги из папок хранилища.',
+		searchBooks: 'Поиск книг',
+		noBookMatches: 'Книги по этому запросу не найдены.',
+		emptyBookshelf:
+			'Книг пока нет. Откройте заметку в Obsidian Books, добавьте book: true или Book.md в папку.',
+		openBook: 'Открыть книгу',
+		commandBookshelf: 'Открыть книжную полку Obsidian Books',
+		ribbonBookshelf: 'Открыть книжную полку Obsidian Books',
+		contents: 'Содержание',
+		previousChapter: 'Предыдущая глава',
+		nextChapter: 'Следующая глава',
 		settingsTitle: 'Obsidian Books',
 		pageMode: 'Режим страниц',
 		pageModeDescription: 'Сколько страниц показывать на экране',
@@ -84,11 +112,18 @@ const STRINGS = {
 		previousPage: 'Предыдущая страница',
 		nextPage: 'Следующая страница',
 		pageStatus: (page: number, total: number) => `Страница ${page} из ${total}`,
+		chapterCount: (count: number) => `${count} гл.`,
+		readingProgress: (fraction: number) => `Прочитано ${Math.round(fraction * 100)}%`,
+		chapterStatus: (chapter: number, chapters: number, page: number, pages: number) =>
+			`Глава ${chapter} из ${chapters} · Страница ${page} из ${pages}`,
 	},
 } as const;
 
 type Language = keyof typeof STRINGS;
-export type StringKey = Exclude<keyof (typeof STRINGS)['en'], 'pageStatus'>;
+type NonFunctionKey<T> = {
+	[K in keyof T]: T[K] extends (...args: never[]) => unknown ? never : K;
+}[keyof T];
+export type StringKey = NonFunctionKey<(typeof STRINGS)['en']>;
 
 function language(): Language {
 	try {
@@ -107,4 +142,21 @@ export function t(key: StringKey): string {
 
 export function pageStatus(page: number, total: number): string {
 	return STRINGS[language()].pageStatus(page, total);
+}
+
+export function chapterCount(count: number): string {
+	return STRINGS[language()].chapterCount(count);
+}
+
+export function readingProgress(fraction: number): string {
+	return STRINGS[language()].readingProgress(fraction);
+}
+
+export function chapterStatus(
+	chapter: number,
+	chapters: number,
+	page: number,
+	pages: number,
+): string {
+	return STRINGS[language()].chapterStatus(chapter, chapters, page, pages);
 }

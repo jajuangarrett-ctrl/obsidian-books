@@ -23,7 +23,7 @@ describe('settings migration', () => {
 			},
 		});
 
-		expect(migrated.schemaVersion).toBe(1);
+		expect(migrated.schemaVersion).toBe(2);
 		expect(migrated.settings).toMatchObject({
 			fontSize: 1.25,
 			lineHeight: 1.8,
@@ -45,6 +45,28 @@ describe('settings migration', () => {
 
 		expect(migrated.settings.transition).toBe('page-turn');
 		expect(migrated.positions['Book.md']?.fraction).toBe(0.25);
+	});
+
+	it('loads book progress and clamps its chapter fraction', () => {
+		const migrated = migratePersistedData({
+			schemaVersion: 2,
+			settings: DEFAULT_SETTINGS,
+			positions: {},
+			bookProgress: {
+				'folder:Novel/Book.md': {
+					chapterPath: 'Novel/02 Middle.md',
+					fraction: -0.5,
+				},
+				broken: { chapterPath: '', fraction: 0.2 },
+			},
+		});
+
+		expect(migrated.bookProgress).toEqual({
+			'folder:Novel/Book.md': {
+				chapterPath: 'Novel/02 Middle.md',
+				fraction: 0,
+			},
+		});
 	});
 
 	it('uses safe defaults and clamps malformed values', () => {

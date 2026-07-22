@@ -22,10 +22,17 @@ export interface ReadingPosition {
 
 export type PositionMap = Record<string, ReadingPosition>;
 
+export interface BookReadingPosition extends ReadingPosition {
+	chapterPath: string;
+}
+
+export type BookProgressMap = Record<string, BookReadingPosition>;
+
 export interface PersistedData {
-	schemaVersion: 1;
+	schemaVersion: 2;
 	settings: ReaderSettings;
 	positions: PositionMap;
+	bookProgress: BookProgressMap;
 }
 
 export interface LegacyData extends Partial<ReaderSettings> {
