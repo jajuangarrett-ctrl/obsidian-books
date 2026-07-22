@@ -9,6 +9,8 @@ import type {
 	PositionMap,
 	ReaderSettings,
 	ReadingBookmark,
+	ReadingAnnotation,
+	QuoteDestination,
 	TransitionMode,
 } from './types';
 import { clampFraction } from './reader/pagination';
@@ -29,6 +31,9 @@ export const DEFAULT_SETTINGS: ReaderSettings = {
 	showTitle: true,
 	openIn: 'new-tab',
 	immersive: true,
+	quoteDestination: 'single-note',
+	quotesNotePath: 'Obsidian Books/Quotes.md',
+	annotationsFolder: 'Obsidian Books/Annotations',
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -43,6 +48,10 @@ function numberSetting(value: unknown, fallback: number, min: number, max: numbe
 
 function booleanSetting(value: unknown, fallback: boolean): boolean {
 	return typeof value === 'boolean' ? value : fallback;
+}
+
+function stringSetting(value: unknown, fallback: string): string {
+	return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
 
 function enumSetting<T extends string>(value: unknown, values: readonly T[], fallback: T): T {
@@ -99,6 +108,16 @@ export function normalizeSettings(value: unknown): ReaderSettings {
 			DEFAULT_SETTINGS.openIn,
 		),
 		immersive: booleanSetting(candidate.immersive, DEFAULT_SETTINGS.immersive),
+		quoteDestination: enumSetting<QuoteDestination>(
+			candidate.quoteDestination,
+			['single-note', 'per-book', 'folder'],
+			DEFAULT_SETTINGS.quoteDestination,
+		),
+		quotesNotePath: stringSetting(candidate.quotesNotePath, DEFAULT_SETTINGS.quotesNotePath),
+		annotationsFolder: stringSetting(
+			candidate.annotationsFolder,
+			DEFAULT_SETTINGS.annotationsFolder,
+		),
 	};
 }
 
@@ -168,15 +187,72 @@ export function normalizeBookmarks(value: unknown): ReadingBookmark[] {
 	return bookmarks;
 }
 
+export function normalizeAnnotations(value: unknown): ReadingAnnotation[] {
+	if (!Array.isArray(value)) return [];
+	const annotations: ReadingAnnotation[] = [];
+	const ids = new Set<string>();
+
+	for (const item of value) {
+		if (
+			!isRecord(item) ||
+			typeof item.id !== 'string' ||
+			!item.id ||
+			ids.has(item.id) ||
+			(item.kind !== 'highlight' && item.kind !== 'quote') ||
+			typeof item.sourcePath !== 'string' ||
+			!item.sourcePath ||
+			typeof item.chapterTitle !== 'string' ||
+			typeof item.selectedText !== 'string' ||
+			!item.selectedText ||
+			typeof item.fraction !== 'number' ||
+			typeof item.createdAt !== 'string' ||
+			!isRecord(item.anchor) ||
+			typeof item.anchor.exact !== 'string' ||
+			typeof item.anchor.prefix !== 'string' ||
+			typeof item.anchor.suffix !== 'string' ||
+			typeof item.anchor.startOffset !== 'number' ||
+			typeof item.anchor.endOffset !== 'number'
+		) {
+			continue;
+		}
+		ids.add(item.id);
+		annotations.push({
+			id: item.id,
+			kind: item.kind,
+			sourcePath: item.sourcePath,
+			bookId: typeof item.bookId === 'string' && item.bookId ? item.bookId : undefined,
+			chapterTitle: item.chapterTitle,
+			heading: typeof item.heading === 'string' && item.heading ? item.heading : undefined,
+			selectedText: item.selectedText,
+			fraction: clampFraction(item.fraction),
+			createdAt: item.createdAt,
+			destinationPath:
+				typeof item.destinationPath === 'string' && item.destinationPath
+					? item.destinationPath
+					: undefined,
+			anchor: {
+				exact: item.anchor.exact,
+				prefix: item.anchor.prefix,
+				suffix: item.anchor.suffix,
+				startOffset: Math.max(0, Math.floor(item.anchor.startOffset)),
+				endOffset: Math.max(0, Math.floor(item.anchor.endOffset)),
+			},
+		});
+	}
+
+	return annotations;
+}
+
 export function migratePersistedData(value: unknown): PersistedData {
 	const candidate = isRecord(value) ? value : {};
 	const hasNestedSettings = isRecord(candidate.settings);
 
 	return {
-		schemaVersion: 3,
+		schemaVersion: 4,
 		settings: normalizeSettings(hasNestedSettings ? candidate.settings : candidate),
 		positions: normalizePositions(candidate.positions),
 		bookProgress: normalizeBookProgress(candidate.bookProgress),
 		bookmarks: normalizeBookmarks(candidate.bookmarks),
+		annotations: normalizeAnnotations(candidate.annotations),
 	};
 }

@@ -1,5 +1,14 @@
-import { Notice, Platform, Plugin, TAbstractFile, TFile, type WorkspaceLeaf } from 'obsidian';
+import {
+	normalizePath,
+	Notice,
+	Platform,
+	Plugin,
+	TAbstractFile,
+	TFile,
+	type WorkspaceLeaf,
+} from 'obsidian';
 
+import { formatQuoteEntry, safeAnnotationFilename } from './annotations/quote-format';
 import { findMatchingBookmark, sortBookmarks } from './bookmarks';
 import { t } from './i18n';
 import { BookLibrary } from './books/discovery';
@@ -14,6 +23,7 @@ import type {
 	PositionMap,
 	ReaderSettings,
 	ReadingBookmark,
+	ReadingAnnotation,
 } from './types';
 
 export default class ObsidianBooksPlugin extends Plugin {
@@ -21,6 +31,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 	public positions: PositionMap = {};
 	public bookProgress: BookProgressMap = {};
 	public bookmarks: ReadingBookmark[] = [];
+	public annotations: ReadingAnnotation[] = [];
 
 	private lastSaved = '';
 	private immersiveDocument: Document | null = null;
@@ -33,6 +44,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 		this.positions = data.positions;
 		this.bookProgress = data.bookProgress;
 		this.bookmarks = data.bookmarks;
+		this.annotations = data.annotations;
 		this.library = new BookLibrary(this.app);
 		this.lastSaved = JSON.stringify(this.dataBlob());
 
@@ -56,6 +68,11 @@ export default class ObsidianBooksPlugin extends Plugin {
 				if (!checking) void this.openReader(file);
 				return true;
 			},
+		});
+
+		this.registerObsidianProtocolHandler('books-open', (parameters) => {
+			const id = parameters.id;
+			if (typeof id === 'string') void this.openAnnotation(id);
 		});
 
 		this.addCommand({
@@ -227,7 +244,52 @@ export default class ObsidianBooksPlugin extends Plugin {
 		void this.saveAll();
 	}
 
-	private async openReaderTarget(file: TFile, bookId: string): Promise<void> {
+	public getAnnotationsForSource(sourcePath: string): ReadingAnnotation[] {
+		return this.annotations.filter((annotation) => annotation.sourcePath === sourcePath);
+	}
+
+	public addHighlight(annotation: ReadingAnnotation): void {
+		this.annotations.push(annotation);
+		void this.saveAll();
+	}
+
+	public async addQuote(book: BookRecord, annotation: ReadingAnnotation): Promise<void> {
+		const destinationPath = this.quoteDestinationPath(book);
+		await this.ensureParentFolder(destinationPath);
+		const existing = this.app.vault.getAbstractFileByPath(destinationPath);
+		const entry = formatQuoteEntry(annotation, this.app.vault.getName());
+		if (existing instanceof TFile) {
+			await this.app.vault.append(existing, `\n${entry}`);
+		} else {
+			await this.app.vault.create(destinationPath, `# Quotes — ${book.title}\n\n${entry}`);
+		}
+		annotation.destinationPath = destinationPath;
+		this.annotations.push(annotation);
+		await this.saveAll();
+	}
+
+	public removeAnnotation(id: string): void {
+		this.annotations = this.annotations.filter((annotation) => annotation.id !== id);
+		void this.saveAll();
+	}
+
+	public async openAnnotation(id: string): Promise<void> {
+		const annotation = this.annotations.find((candidate) => candidate.id === id);
+		if (!annotation) return;
+		const file = this.app.vault.getAbstractFileByPath(annotation.sourcePath);
+		if (!(file instanceof TFile)) {
+			new Notice(t('notFound'));
+			return;
+		}
+		const book = this.resolveBookForFile(file, annotation.bookId);
+		await this.openReaderTarget(file, book.id, annotation.fraction);
+	}
+
+	private async openReaderTarget(
+		file: TFile,
+		bookId: string,
+		initialFraction?: number,
+	): Promise<void> {
 		let leaf: WorkspaceLeaf;
 		try {
 			if (this.settings.openIn === 'current') leaf = this.app.workspace.getLeaf(false);
@@ -239,7 +301,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 			await leaf.setViewState({
 				type: VIEW_TYPE_READER,
 				active: true,
-				state: { filePath: file.path, bookId },
+				state: { filePath: file.path, bookId, initialFraction },
 			});
 			await this.app.workspace.revealLeaf(leaf);
 			this.applyImmersive(leaf);
@@ -301,11 +363,12 @@ export default class ObsidianBooksPlugin extends Plugin {
 
 	private dataBlob(): PersistedData {
 		return {
-			schemaVersion: 3,
+			schemaVersion: 4,
 			settings: this.settings,
 			positions: this.positions,
 			bookProgress: this.bookProgress,
 			bookmarks: this.bookmarks,
+			annotations: this.annotations,
 		};
 	}
 
@@ -331,6 +394,37 @@ export default class ObsidianBooksPlugin extends Plugin {
 			book.manifestPath ??
 			''
 		);
+	}
+
+	private quoteDestinationPath(book: BookRecord): string {
+		const settings = this.settings;
+		if (settings.quoteDestination === 'single-note') {
+			return normalizePath(this.ensureMarkdownExtension(settings.quotesNotePath));
+		}
+		if (settings.quoteDestination === 'per-book') {
+			const name = book.kind === 'folder' ? 'Annotations.md' : `${safeAnnotationFilename(book.title)} Annotations.md`;
+			return normalizePath(book.rootPath ? `${book.rootPath}/${name}` : name);
+		}
+		return normalizePath(
+			`${settings.annotationsFolder}/${safeAnnotationFilename(book.title)}.md`,
+		);
+	}
+
+	private ensureMarkdownExtension(path: string): string {
+		return path.toLowerCase().endsWith('.md') ? path : `${path}.md`;
+	}
+
+	private async ensureParentFolder(path: string): Promise<void> {
+		const slash = path.lastIndexOf('/');
+		if (slash < 0) return;
+		const parts = path.slice(0, slash).split('/').filter(Boolean);
+		let current = '';
+		for (const part of parts) {
+			current = current ? `${current}/${part}` : part;
+			if (!this.app.vault.getAbstractFileByPath(current)) {
+				await this.app.vault.createFolder(current);
+			}
+		}
 	}
 
 	private invalidateBooks(): void {

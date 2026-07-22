@@ -3,6 +3,7 @@ export type OpenMode = 'new-tab' | 'current' | 'split' | 'window';
 export type TransitionMode = 'none' | 'slide' | 'page-turn';
 export type AppearancePreset = 'theme' | 'white' | 'cream' | 'sepia' | 'dark';
 export type FontFamily = 'theme' | 'serif' | 'sans';
+export type QuoteDestination = 'single-note' | 'per-book' | 'folder';
 
 export interface ReaderSettings {
 	fontSize: number;
@@ -20,6 +21,9 @@ export interface ReaderSettings {
 	showTitle: boolean;
 	openIn: OpenMode;
 	immersive: boolean;
+	quoteDestination: QuoteDestination;
+	quotesNotePath: string;
+	annotationsFolder: string;
 }
 
 export interface ReadingPosition {
@@ -41,12 +45,36 @@ export interface ReadingBookmark extends ReadingPosition {
 	createdAt: string;
 }
 
+export interface TextAnchor {
+	exact: string;
+	prefix: string;
+	suffix: string;
+	startOffset: number;
+	endOffset: number;
+}
+
+export type AnnotationKind = 'highlight' | 'quote';
+
+export interface ReadingAnnotation extends ReadingPosition {
+	id: string;
+	kind: AnnotationKind;
+	sourcePath: string;
+	bookId?: string;
+	chapterTitle: string;
+	heading?: string;
+	selectedText: string;
+	anchor: TextAnchor;
+	createdAt: string;
+	destinationPath?: string;
+}
+
 export interface PersistedData {
-	schemaVersion: 3;
+	schemaVersion: 4;
 	settings: ReaderSettings;
 	positions: PositionMap;
 	bookProgress: BookProgressMap;
 	bookmarks: ReadingBookmark[];
+	annotations: ReadingAnnotation[];
 }
 
 export interface LegacyData extends Partial<ReaderSettings> {
