@@ -481,6 +481,19 @@ export default class ObsidianBooksPlugin extends Plugin {
 					: undefined,
 			};
 		});
+		this.annotations = this.annotations.map((annotation) => {
+			const idPrefix = annotation.bookId?.startsWith('folder:') ? 'folder:' : 'note:';
+			return {
+				...annotation,
+				sourcePath: rewrite(annotation.sourcePath),
+				destinationPath: annotation.destinationPath
+					? rewrite(annotation.destinationPath)
+					: undefined,
+				bookId: annotation.bookId
+					? `${idPrefix}${rewrite(annotation.bookId.slice(annotation.bookId.indexOf(':') + 1))}`
+					: undefined,
+			};
+		});
 		this.invalidateBooks();
 	}
 
@@ -513,6 +526,20 @@ export default class ObsidianBooksPlugin extends Plugin {
 			(bookmark) =>
 				bookmark.sourcePath !== file.path && !bookmark.sourcePath.startsWith(prefix),
 		);
+		this.annotations = this.annotations
+			.filter(
+				(annotation) =>
+					annotation.sourcePath !== file.path &&
+					!annotation.sourcePath.startsWith(prefix),
+			)
+			.map((annotation) => ({
+				...annotation,
+				destinationPath:
+					annotation.destinationPath === file.path ||
+					annotation.destinationPath?.startsWith(prefix)
+						? undefined
+						: annotation.destinationPath,
+			}));
 		this.invalidateBooks();
 	}
 }

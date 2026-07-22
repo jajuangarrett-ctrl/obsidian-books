@@ -2,7 +2,14 @@ import { App, PluginSettingTab, Setting } from 'obsidian';
 
 import type ObsidianBooksPlugin from './main';
 import { t } from './i18n';
-import type { AppearancePreset, FontFamily, OpenMode, PageMode, TransitionMode } from './types';
+import type {
+	AppearancePreset,
+	FontFamily,
+	OpenMode,
+	PageMode,
+	QuoteDestination,
+	TransitionMode,
+} from './types';
 
 export class ReaderSettingTab extends PluginSettingTab {
 	public constructor(
@@ -194,5 +201,44 @@ export class ReaderSettingTab extends PluginSettingTab {
 					await save();
 				}),
 			);
+
+		new Setting(containerEl).setName(t('annotationsSettings')).setHeading();
+
+		new Setting(containerEl).setName(t('quoteDestination')).addDropdown((dropdown) =>
+			dropdown
+				.addOptions({
+					'single-note': t('singleQuotesNote'),
+					'per-book': t('perBookNote'),
+					folder: t('annotationFolderOption'),
+				})
+				.setValue(this.booksPlugin.settings.quoteDestination)
+				.onChange(async (value) => {
+					this.booksPlugin.settings.quoteDestination = value as QuoteDestination;
+					await save();
+					this.display();
+				}),
+		);
+
+		if (this.booksPlugin.settings.quoteDestination === 'single-note') {
+			new Setting(containerEl).setName(t('quotesNotePath')).addText((text) =>
+				text
+					.setValue(this.booksPlugin.settings.quotesNotePath)
+					.onChange(async (value) => {
+						this.booksPlugin.settings.quotesNotePath = value;
+						await this.booksPlugin.saveAll();
+					}),
+			);
+		}
+
+		if (this.booksPlugin.settings.quoteDestination === 'folder') {
+			new Setting(containerEl).setName(t('annotationsFolder')).addText((text) =>
+				text
+					.setValue(this.booksPlugin.settings.annotationsFolder)
+					.onChange(async (value) => {
+						this.booksPlugin.settings.annotationsFolder = value;
+						await this.booksPlugin.saveAll();
+					}),
+			);
+		}
 	}
 }
