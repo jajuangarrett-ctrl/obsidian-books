@@ -21,7 +21,19 @@ const STRINGS = {
 		contents: 'Contents',
 		previousChapter: 'Previous chapter',
 		nextChapter: 'Next chapter',
+		addBookmark: 'Add bookmark',
+		removeBookmark: 'Remove bookmark',
+		bookmarks: 'Bookmarks',
+		remove: 'Remove',
+		bookmarkAdded: 'Bookmark added.',
+		bookmarkRemoved: 'Bookmark removed.',
 		settingsTitle: 'Obsidian Books',
+		appearance: 'Reading surface',
+		themeSurface: 'Follow Obsidian theme',
+		whiteSurface: 'White',
+		creamSurface: 'Cream',
+		sepiaSurface: 'Sepia',
+		darkSurface: 'Dark',
 		pageMode: 'Page mode',
 		pageModeDescription: 'How many pages to show on screen',
 		auto: 'Auto (two on a wide screen, one on a narrow screen)',
@@ -31,7 +43,13 @@ const STRINGS = {
 		maxPageWidthDescription: 'Width of one page in pixels; 0 removes the limit',
 		fontSize: 'Font size',
 		fontSizeDescription: "Multiplier relative to the active theme's reading font",
+		fontFamily: 'Font family',
+		themeFont: 'Theme font',
+		serifFont: 'Book serif',
+		sansFont: 'Clean sans serif',
 		lineHeight: 'Line height',
+		paragraphSpacing: 'Paragraph spacing',
+		pageMargin: 'Outer page margin',
 		pageGap: 'Gap between pages',
 		transition: 'Page transition',
 		none: 'None',
@@ -58,6 +76,8 @@ const STRINGS = {
 		readingProgress: (fraction: number) => `${Math.round(fraction * 100)}% read`,
 		chapterStatus: (chapter: number, chapters: number, page: number, pages: number) =>
 			`Chapter ${chapter} of ${chapters} · Page ${page} of ${pages}`,
+		minutesLeft: (minutes: number) => `${minutes} min left in chapter`,
+		bookmarkLocation: (chapter: string, percent: number) => `${chapter}, ${percent}%`,
 	},
 	ru: {
 		fallbackTitle: 'Obsidian Books',
@@ -81,7 +101,19 @@ const STRINGS = {
 		contents: 'Содержание',
 		previousChapter: 'Предыдущая глава',
 		nextChapter: 'Следующая глава',
+		addBookmark: 'Добавить закладку',
+		removeBookmark: 'Удалить закладку',
+		bookmarks: 'Закладки',
+		remove: 'Удалить',
+		bookmarkAdded: 'Закладка добавлена.',
+		bookmarkRemoved: 'Закладка удалена.',
 		settingsTitle: 'Obsidian Books',
+		appearance: 'Фон для чтения',
+		themeSurface: 'Как в теме Obsidian',
+		whiteSurface: 'Белый',
+		creamSurface: 'Кремовый',
+		sepiaSurface: 'Сепия',
+		darkSurface: 'Тёмный',
 		pageMode: 'Режим страниц',
 		pageModeDescription: 'Сколько страниц показывать на экране',
 		auto: 'Авто (две на широком экране, одна на узком)',
@@ -91,7 +123,13 @@ const STRINGS = {
 		maxPageWidthDescription: 'Ширина одной страницы в пикселях; 0 снимает ограничение',
 		fontSize: 'Размер шрифта',
 		fontSizeDescription: 'Множитель относительно шрифта активной темы',
+		fontFamily: 'Шрифт',
+		themeFont: 'Шрифт темы',
+		serifFont: 'Книжный с засечками',
+		sansFont: 'Без засечек',
 		lineHeight: 'Межстрочный интервал',
+		paragraphSpacing: 'Интервал между абзацами',
+		pageMargin: 'Внешнее поле страницы',
 		pageGap: 'Промежуток между страницами',
 		transition: 'Переход между страницами',
 		none: 'Без анимации',
@@ -116,6 +154,8 @@ const STRINGS = {
 		readingProgress: (fraction: number) => `Прочитано ${Math.round(fraction * 100)}%`,
 		chapterStatus: (chapter: number, chapters: number, page: number, pages: number) =>
 			`Глава ${chapter} из ${chapters} · Страница ${page} из ${pages}`,
+		minutesLeft: (minutes: number) => `Осталось ${minutes} мин. в главе`,
+		bookmarkLocation: (chapter: string, percent: number) => `${chapter}, ${percent}%`,
 	},
 } as const;
 
@@ -159,4 +199,12 @@ export function chapterStatus(
 	pages: number,
 ): string {
 	return STRINGS[language()].chapterStatus(chapter, chapters, page, pages);
+}
+
+export function minutesLeft(minutes: number): string {
+	return STRINGS[language()].minutesLeft(minutes);
+}
+
+export function bookmarkLocation(chapter: string, percent: number): string {
+	return STRINGS[language()].bookmarkLocation(chapter, percent);
 }

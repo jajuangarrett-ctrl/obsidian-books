@@ -1,5 +1,6 @@
 import { Notice, Platform, Plugin, TAbstractFile, TFile, type WorkspaceLeaf } from 'obsidian';
 
+import { findMatchingBookmark, sortBookmarks } from './bookmarks';
 import { t } from './i18n';
 import { BookLibrary } from './books/discovery';
 import type { BookRecord } from './books/domain';
@@ -7,12 +8,19 @@ import { BookshelfView, VIEW_TYPE_BOOKSHELF } from './bookshelf/BookshelfView';
 import { ReaderView, VIEW_TYPE_READER } from './reader/ReaderView';
 import { migratePersistedData } from './settings-data';
 import { ReaderSettingTab } from './settings-tab';
-import type { BookProgressMap, PersistedData, PositionMap, ReaderSettings } from './types';
+import type {
+	BookProgressMap,
+	PersistedData,
+	PositionMap,
+	ReaderSettings,
+	ReadingBookmark,
+} from './types';
 
 export default class ObsidianBooksPlugin extends Plugin {
 	public settings!: ReaderSettings;
 	public positions: PositionMap = {};
 	public bookProgress: BookProgressMap = {};
+	public bookmarks: ReadingBookmark[] = [];
 
 	private lastSaved = '';
 	private immersiveDocument: Document | null = null;
@@ -24,6 +32,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 		this.settings = data.settings;
 		this.positions = data.positions;
 		this.bookProgress = data.bookProgress;
+		this.bookmarks = data.bookmarks;
 		this.library = new BookLibrary(this.app);
 		this.lastSaved = JSON.stringify(this.dataBlob());
 
@@ -182,6 +191,42 @@ export default class ObsidianBooksPlugin extends Plugin {
 		this.bookProgress[book.id] = { chapterPath, fraction };
 	}
 
+	public getBookmarksForBook(book: BookRecord): ReadingBookmark[] {
+		const chapterPaths = new Set(book.chapters.map((chapter) => chapter.path));
+		return sortBookmarks(
+			this.bookmarks.filter(
+				(bookmark) => bookmark.bookId === book.id || chapterPaths.has(bookmark.sourcePath),
+			),
+		);
+	}
+
+	public findBookmark(sourcePath: string, fraction: number): ReadingBookmark | undefined {
+		return findMatchingBookmark(this.bookmarks, sourcePath, fraction);
+	}
+
+	public toggleBookmark(book: BookRecord, sourcePath: string, fraction: number): boolean {
+		const existing = this.findBookmark(sourcePath, fraction);
+		if (existing) {
+			this.removeBookmark(existing.id);
+			return false;
+		}
+
+		this.bookmarks.push({
+			id: `bookmark-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+			bookId: book.id,
+			sourcePath,
+			fraction,
+			createdAt: new Date().toISOString(),
+		});
+		void this.saveAll();
+		return true;
+	}
+
+	public removeBookmark(id: string): void {
+		this.bookmarks = this.bookmarks.filter((bookmark) => bookmark.id !== id);
+		void this.saveAll();
+	}
+
 	private async openReaderTarget(file: TFile, bookId: string): Promise<void> {
 		let leaf: WorkspaceLeaf;
 		try {
@@ -256,10 +301,11 @@ export default class ObsidianBooksPlugin extends Plugin {
 
 	private dataBlob(): PersistedData {
 		return {
-			schemaVersion: 2,
+			schemaVersion: 3,
 			settings: this.settings,
 			positions: this.positions,
 			bookProgress: this.bookProgress,
+			bookmarks: this.bookmarks,
 		};
 	}
 
@@ -331,6 +377,16 @@ export default class ObsidianBooksPlugin extends Plugin {
 			if (rewrittenId !== bookId) delete this.bookProgress[bookId];
 			this.bookProgress[rewrittenId] = rewrittenProgress;
 		}
+		this.bookmarks = this.bookmarks.map((bookmark) => {
+			const idPrefix = bookmark.bookId?.startsWith('folder:') ? 'folder:' : 'note:';
+			return {
+				...bookmark,
+				sourcePath: rewrite(bookmark.sourcePath),
+				bookId: bookmark.bookId
+					? `${idPrefix}${rewrite(bookmark.bookId.slice(bookmark.bookId.indexOf(':') + 1))}`
+					: undefined,
+			};
+		});
 		this.invalidateBooks();
 	}
 
@@ -359,6 +415,10 @@ export default class ObsidianBooksPlugin extends Plugin {
 				delete this.bookProgress[bookId];
 			}
 		}
+		this.bookmarks = this.bookmarks.filter(
+			(bookmark) =>
+				bookmark.sourcePath !== file.path && !bookmark.sourcePath.startsWith(prefix),
+		);
 		this.invalidateBooks();
 	}
 }
