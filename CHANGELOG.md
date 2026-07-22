@@ -31,6 +31,8 @@ All notable changes to Obsidian Books will be documented in this file.
   and Obsidian protocol links that reopen the saved chapter location.
 - Automatic vertical-flow fallback and saved scroll progress for PDFs and
   oversized unbreakable or interactive content.
+- Public screenshots covering the bookshelf, responsive reader, annotation
+  manager, and oversized-content fallback.
 
 ### Changed
 
@@ -40,6 +42,9 @@ All notable changes to Obsidian Books will be documented in this file.
   `Workspace.revealLeaf` API.
 - Migrated saved settings to a versioned nested data format while accepting the
   original MD Reader shape.
+- Completed dedicated-vault desktop validation for every launch path, reader
+  transition, navigation input, responsive spread, theme and typography extreme,
+  bookshelf workflow, bookmark, annotation destination, and vertical fallback.
 
 ### Removed
 

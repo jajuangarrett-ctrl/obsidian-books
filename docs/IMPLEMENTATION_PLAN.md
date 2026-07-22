@@ -5,6 +5,11 @@ install into a dedicated test vault, and a conventional commit pushed to GitHub.
 Runtime failures return to the current phase until reproduced, fixed, rebuilt,
 reinstalled, and retested.
 
+Current status: phases 0–4 are complete. Phase 5 is in progress; automated,
+desktop, responsive-viewport, and synthetic-touch passes are recorded in the
+test checklist. Physical iPad and VoiceOver validation and the remaining
+third-party/embed compatibility checks are still open release gates.
+
 ## Phase 0 — Foundation and audit
 
 - Preserve MD Reader history, MIT license, and attribution.

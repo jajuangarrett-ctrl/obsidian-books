@@ -7,9 +7,17 @@ columns plus `translateX` pagination model instead of replacing the proven
 foundation.
 
 > [!NOTE]
-> Obsidian Books is an early development preview. Single-note reading is working;
-> bookmarks, annotations, quote capture, and advanced compatibility fallbacks are
-> under active development.
+> Obsidian Books is a public development preview. Its reader, bookshelf, folder
+> books, bookmarks, source-safe annotations, quote capture, and vertical fallback
+> are implemented. Physical iPad and VoiceOver validation is still pending.
+
+## Preview
+
+![Searchable bookshelf with single-note and folder books](docs/screenshots/bookshelf.png)
+
+![Responsive two-page reading layout](docs/screenshots/reader-two-page.png)
+
+![Chapter contents, bookmarks, and source-safe annotations](docs/screenshots/annotations.png)
 
 ## Current features
 
@@ -135,10 +143,13 @@ The production bundle is `main.js`; Obsidian also requires `manifest.json` and
 - Removing a quote annotation from Contents does not delete the already-written
   quote block from its Markdown destination; that user-owned text must be edited
   or removed directly.
-- Very tall or unusually interactive rendered blocks still need the planned
-  vertical-flow fallback and full compatibility testing.
 - Mobile and iPad behavior has not yet been validated on a physical iPad.
-- Screenshots will be added after the reader design stabilizes.
+- Dataview, the Obsidian Tasks plugin, PDF embeds, and audio/video embeds still
+  need direct compatibility passes in the dedicated test vault.
+
+Oversized chapters automatically switch to a native vertical reading flow:
+
+![Scrollable fallback for oversized content](docs/screenshots/vertical-fallback.png)
 
 ## License
 
