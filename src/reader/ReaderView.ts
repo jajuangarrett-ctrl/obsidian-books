@@ -501,9 +501,23 @@ export class ReaderView extends ItemView {
 			if (seen.has(element)) return;
 			seen.add(element);
 			const scrollHeight = element.instanceOf(HTMLElement) ? element.scrollHeight : 0;
+			const style = element.instanceOf(HTMLElement)
+				? element.win.getComputedStyle(element)
+				: null;
+			const lineHeight = style
+				? Number.parseFloat(style.lineHeight) || Number.parseFloat(style.fontSize) * 1.4
+				: 0;
+			const estimatedPreHeight =
+				element.tagName === 'PRE'
+					? (element.textContent?.split(/\r?\n/).length ?? 0) * lineHeight + 32
+					: 0;
 			blocks.push({
 				kind,
-				height: Math.max(scrollHeight, element.getBoundingClientRect().height),
+				height: Math.max(
+					scrollHeight,
+					estimatedPreHeight,
+					element.getBoundingClientRect().height,
+				),
 			});
 		};
 
