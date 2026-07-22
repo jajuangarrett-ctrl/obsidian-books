@@ -72,4 +72,3 @@ describe('normalized reading positions', () => {
 		expect(clampPage(12, 9)).toBe(8);
 	});
 });
-

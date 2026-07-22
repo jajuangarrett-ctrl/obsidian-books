@@ -34,4 +34,3 @@ export interface LegacyData extends Partial<ReaderSettings> {
 	hideMobileBar?: boolean;
 	positions?: PositionMap;
 }
-

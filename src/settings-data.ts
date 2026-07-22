@@ -37,11 +37,7 @@ function booleanSetting(value: unknown, fallback: boolean): boolean {
 	return typeof value === 'boolean' ? value : fallback;
 }
 
-function enumSetting<T extends string>(
-	value: unknown,
-	values: readonly T[],
-	fallback: T,
-): T {
+function enumSetting<T extends string>(value: unknown, values: readonly T[], fallback: T): T {
 	return typeof value === 'string' && values.includes(value as T) ? (value as T) : fallback;
 }
 
@@ -59,12 +55,7 @@ export function normalizeSettings(value: unknown): ReaderSettings {
 			['auto', 'single', 'double'],
 			DEFAULT_SETTINGS.pageMode,
 		),
-		maxPageWidth: numberSetting(
-			candidate.maxPageWidth,
-			DEFAULT_SETTINGS.maxPageWidth,
-			0,
-			1000,
-		),
+		maxPageWidth: numberSetting(candidate.maxPageWidth, DEFAULT_SETTINGS.maxPageWidth, 0, 1000),
 		columnGap: numberSetting(candidate.columnGap, DEFAULT_SETTINGS.columnGap, 0.5, 5),
 		transition: enumSetting<TransitionMode>(
 			candidate.transition ?? legacyTransition,
@@ -108,4 +99,3 @@ export function migratePersistedData(value: unknown): PersistedData {
 		positions: normalizePositions(candidate.positions),
 	};
 }
-

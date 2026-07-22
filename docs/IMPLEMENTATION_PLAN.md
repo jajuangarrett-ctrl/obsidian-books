@@ -87,4 +87,3 @@ theme changes without source modification.
 Release gates: clean install, build, lint, format check, all automated tests,
 desktop computer-use validation, documented device results, and no known failing
 required workflow.
-

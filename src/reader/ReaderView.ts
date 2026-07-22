@@ -5,6 +5,7 @@ import {
 	Platform,
 	Scope,
 	TFile,
+	type Modifier,
 	type ViewStateResult,
 	type WorkspaceLeaf,
 } from 'obsidian';
@@ -432,7 +433,7 @@ export class ReaderView extends ItemView {
 
 	private buildScope(): void {
 		const scope = new Scope(this.app.scope);
-		const register = (modifiers: string[], key: string, callback: () => void): void => {
+		const register = (modifiers: Modifier[], key: string, callback: () => void): void => {
 			scope.register(modifiers, key, () => {
 				callback();
 				return false;
@@ -473,8 +474,12 @@ export class ReaderView extends ItemView {
 		while (element && element !== this.viewport) {
 			if (element instanceof HTMLElement) {
 				const style = getComputedStyle(element);
-				const scrollsX = /(auto|scroll)/.test(style.overflowX) && element.scrollWidth > element.clientWidth;
-				const scrollsY = /(auto|scroll)/.test(style.overflowY) && element.scrollHeight > element.clientHeight;
+				const scrollsX =
+					/(auto|scroll)/.test(style.overflowX) &&
+					element.scrollWidth > element.clientWidth;
+				const scrollsY =
+					/(auto|scroll)/.test(style.overflowY) &&
+					element.scrollHeight > element.clientHeight;
 				if (scrollsX || scrollsY) return true;
 			}
 			element = element.parentElement;
@@ -512,14 +517,21 @@ export class ReaderView extends ItemView {
 			this.viewport,
 			'touchstart',
 			(event) => {
-				if (event.touches.length !== 1 || this.isInteractive(event.target) || this.isScrollable(event.target)) {
+				if (
+					event.touches.length !== 1 ||
+					this.isInteractive(event.target) ||
+					this.isScrollable(event.target)
+				) {
 					abortDrag();
 					return;
 				}
 				const touch = event.touches[0];
 				if (!touch) return;
 				const view = this.viewport.ownerDocument.defaultView;
-				if (!view || Math.min(touch.clientX, view.innerWidth - touch.clientX) < operatingSystemEdge) {
+				if (
+					!view ||
+					Math.min(touch.clientX, view.innerWidth - touch.clientX) < operatingSystemEdge
+				) {
 					abortDrag();
 					return;
 				}
@@ -544,7 +556,8 @@ export class ReaderView extends ItemView {
 				const deltaX = touch.clientX - startX;
 				const deltaY = touch.clientY - startY;
 				if (!decided) {
-					if (Math.abs(deltaX) < claimThreshold && Math.abs(deltaY) < claimThreshold) return;
+					if (Math.abs(deltaX) < claimThreshold && Math.abs(deltaY) < claimThreshold)
+						return;
 					if (Math.abs(deltaY) > Math.abs(deltaX)) {
 						dragging = false;
 						this.applySettings();
@@ -640,7 +653,8 @@ export class ReaderView extends ItemView {
 			'wheel',
 			(event) => {
 				if (this.isScrollable(event.target)) return;
-				const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+				const delta =
+					Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
 				if (Math.abs(delta) < 20) return;
 				event.preventDefault();
 				if (wheelLocked) return;

@@ -45,4 +45,3 @@ if (production) {
 } else {
 	await context.watch();
 }
-

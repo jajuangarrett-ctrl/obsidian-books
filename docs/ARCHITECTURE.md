@@ -104,4 +104,3 @@ page or require their own scrolling surface. Content classification will mark
 incompatible chapters for a vertical reading fallback rather than clipping or
 hiding material. The fallback keeps navigation, progress, bookmarks, headings,
 and annotations available while using normal document flow.
-

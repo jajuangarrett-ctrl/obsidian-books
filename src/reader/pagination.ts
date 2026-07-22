@@ -67,4 +67,3 @@ export function calculateTotalPages(scrollWidth: number, gap: number, stride: nu
 	if (!Number.isFinite(scrollWidth) || !Number.isFinite(stride) || stride <= 0) return 1;
 	return Math.max(1, Math.round((Math.max(0, scrollWidth) + Math.max(0, gap)) / stride));
 }
-

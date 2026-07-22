@@ -25,7 +25,8 @@ const STRINGS = {
 		slide: 'Horizontal slide',
 		pageTurn: '3D page turn',
 		tapZones: 'Tap zones',
-		tapZonesDescription: 'Tap the left or right third to turn; tap the center to toggle controls',
+		tapZonesDescription:
+			'Tap the left or right third to turn; tap the center to toggle controls',
 		rememberPosition: 'Remember position',
 		rememberPositionDescription: 'Reopen each note at approximately the same passage',
 		showTitle: 'Show note title',
@@ -35,7 +36,8 @@ const STRINGS = {
 		split: 'Split',
 		newWindow: 'New window',
 		immersive: 'Immersive reading',
-		immersiveDescription: 'Hide app chrome while reading; press Escape or tap the center to restore it',
+		immersiveDescription:
+			'Hide app chrome while reading; press Escape or tap the center to restore it',
 		previousPage: 'Previous page',
 		nextPage: 'Next page',
 		pageStatus: (page: number, total: number) => `Page ${page} of ${total}`,
@@ -104,4 +106,3 @@ export function t(key: StringKey): string {
 export function pageStatus(page: number, total: number): string {
 	return STRINGS[language()].pageStatus(page, total);
 }
-

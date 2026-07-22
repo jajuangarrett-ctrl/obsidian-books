@@ -4,7 +4,7 @@ Read your Obsidian notes like an e-book.
 
 MD Reader renders a note into fixed-size **pages** and lets you flip through them **sideways** — by swiping, tapping the screen edges, or using the arrow keys — instead of scrolling vertically. Choose a single page or a two-page book spread. Works on **desktop and mobile**.
 
-There was no plugin that paginates your *own* Markdown notes into flippable pages (the existing "reader" plugins all open EPUB/PDF files), so this one fills that gap.
+There was no plugin that paginates your _own_ Markdown notes into flippable pages (the existing "reader" plugins all open EPUB/PDF files), so this one fills that gap.
 
 ## Features
 
@@ -33,20 +33,20 @@ Then:
 
 ## Settings
 
-| Setting | What it does |
-| --- | --- |
-| Page mode | Auto (two pages on a wide screen, one on a narrow one), Always one, or Always two. |
-| Max page width | Width of a single page; smaller is a narrower, more comfortable column. |
-| Font size | Multiplier relative to your theme's reading font. |
-| Line height | Line spacing. |
-| Page gap | Space between pages. |
-| Flip animation | Animate page turns on/off. |
-| Tap zones | Tap left/right to flip, center to toggle the interface. |
-| Remember position | Reopen each note where you left off. |
-| Show note title | Show the note title on the first page. |
-| Open in | New tab, current tab, split, or new window. |
-| Collapse side panels | Hide the side panels while reading. |
-| Immersive | Hide the app chrome for full-screen reading. |
+| Setting                             | What it does                                                                                |
+| ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| Page mode                           | Auto (two pages on a wide screen, one on a narrow one), Always one, or Always two.          |
+| Max page width                      | Width of a single page; smaller is a narrower, more comfortable column.                     |
+| Font size                           | Multiplier relative to your theme's reading font.                                           |
+| Line height                         | Line spacing.                                                                               |
+| Page gap                            | Space between pages.                                                                        |
+| Flip animation                      | Animate page turns on/off.                                                                  |
+| Tap zones                           | Tap left/right to flip, center to toggle the interface.                                     |
+| Remember position                   | Reopen each note where you left off.                                                        |
+| Show note title                     | Show the note title on the first page.                                                      |
+| Open in                             | New tab, current tab, split, or new window.                                                 |
+| Collapse side panels                | Hide the side panels while reading.                                                         |
+| Immersive                           | Hide the app chrome for full-screen reading.                                                |
 | Hide the system status bar (mobile) | On a phone, also hide the OS status bar (clock, notifications) while reading. Experimental. |
 
 ## Installation

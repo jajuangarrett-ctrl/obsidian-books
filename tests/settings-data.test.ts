@@ -76,4 +76,3 @@ describe('settings migration', () => {
 		expect(migrated.positions).toEqual({ good: { fraction: 1 } });
 	});
 });
-

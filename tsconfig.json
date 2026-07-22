@@ -18,4 +18,3 @@
 	},
 	"include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]
 }
-

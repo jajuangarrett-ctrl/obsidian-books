@@ -5,7 +5,10 @@ import { t } from './i18n';
 import type { OpenMode, PageMode, TransitionMode } from './types';
 
 export class ReaderSettingTab extends PluginSettingTab {
-	public constructor(app: App, private readonly booksPlugin: ObsidianBooksPlugin) {
+	public constructor(
+		app: App,
+		private readonly booksPlugin: ObsidianBooksPlugin,
+	) {
 		super(app, booksPlugin);
 	}
 
@@ -106,10 +109,12 @@ export class ReaderSettingTab extends PluginSettingTab {
 			.setName(t('rememberPosition'))
 			.setDesc(t('rememberPositionDescription'))
 			.addToggle((toggle) =>
-				toggle.setValue(this.booksPlugin.settings.rememberPosition).onChange(async (value) => {
-					this.booksPlugin.settings.rememberPosition = value;
-					await save();
-				}),
+				toggle
+					.setValue(this.booksPlugin.settings.rememberPosition)
+					.onChange(async (value) => {
+						this.booksPlugin.settings.rememberPosition = value;
+						await save();
+					}),
 			);
 
 		new Setting(containerEl).setName(t('showTitle')).addToggle((toggle) =>
@@ -145,4 +150,3 @@ export class ReaderSettingTab extends PluginSettingTab {
 			);
 	}
 }
-
