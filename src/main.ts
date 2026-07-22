@@ -248,6 +248,23 @@ export default class ObsidianBooksPlugin extends Plugin {
 		return this.annotations.filter((annotation) => annotation.sourcePath === sourcePath);
 	}
 
+	public getAnnotationsForBook(book: BookRecord): ReadingAnnotation[] {
+		const chapterPaths = new Set(book.chapters.map((chapter) => chapter.path));
+		return this.annotations
+			.filter(
+				(annotation) => annotation.bookId === book.id || chapterPaths.has(annotation.sourcePath),
+			)
+			.sort((left, right) => {
+				const leftChapter = book.chapters.findIndex(
+					(chapter) => chapter.path === left.sourcePath,
+				);
+				const rightChapter = book.chapters.findIndex(
+					(chapter) => chapter.path === right.sourcePath,
+				);
+				return leftChapter - rightChapter || left.fraction - right.fraction;
+			});
+	}
+
 	public addHighlight(annotation: ReadingAnnotation): void {
 		this.annotations.push(annotation);
 		void this.saveAll();
