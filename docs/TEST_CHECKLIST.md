@@ -6,71 +6,71 @@ Statuses: **Pass**, **Fail**, **Pending**, or **Physical device required**.
 
 ## Automated validation
 
-| Check             | Status | Current evidence                                                                           |
-| ----------------- | ------ | ------------------------------------------------------------------------------------------ |
-| Format check      | Pass   | `npm run format:check`                                                                     |
-| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API       |
-| Unit tests        | Pass   | 9 tests across pagination geometry, normalized position conversion, and settings migration |
-| Type check        | Pass   | Strict TypeScript through `npm run build`                                                  |
-| Production bundle | Pass   | esbuild produces `main.js`                                                                 |
-| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation               |
+| Check             | Status | Current evidence                                                                                                                               |
+| ----------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Format check      | Pass   | `npm run format:check`                                                                                                                         |
+| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                           |
+| Unit tests        | Pass   | 10 tests across pagination geometry, centered-stage translation, normalized position conversion, settings migration, and translation alignment |
+| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                      |
+| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                     |
+| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                   |
 
 ## Desktop reader
 
-| Workflow                                              | Status  | Notes                        |
-| ----------------------------------------------------- | ------- | ---------------------------- |
-| Install and enable in dedicated test vault            | Pending |                              |
-| Open from ribbon, command, and file menu              | Pending |                              |
-| None transition                                       | Pending |                              |
-| Horizontal Slide transition                           | Pending |                              |
-| 3D Page Turn transition                               | Pending |                              |
-| Arrow, Page Up/Down, Space, Home/End navigation       | Pending |                              |
-| Mouse wheel navigation                                | Pending |                              |
-| Tap zones and visible controls                        | Pending |                              |
-| Single-page portrait/narrow layout                    | Pending |                              |
-| Two-page landscape/wide layout                        | Pending |                              |
-| Responsive repagination preserves approximate passage | Pending |                              |
-| Immersive mode enters and exits safely                | Pending |                              |
-| Light and dark Obsidian themes                        | Pending |                              |
-| Minimum and maximum font/spacing settings             | Pending |                              |
-| Reduced motion                                        | Pending |                              |
-| Increased contrast and visible focus                  | Pending |                              |
-| Keyboard-only operation                               | Pending |                              |
-| Screen-reader labels and page announcements           | Pending | VoiceOver validation planned |
+| Workflow                                              | Status  | Notes                                                                                                     |
+| ----------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| Install and enable in dedicated test vault            | Pass    | Enabled in `obsidian-books-test`, outside the primary vault                                               |
+| Open from ribbon, command, and file menu              | Pending |                                                                                                           |
+| None transition                                       | Pass    | Selected through plugin settings and used for page navigation                                             |
+| Horizontal Slide transition                           | Pass    | Default transition exercised during initial navigation                                                    |
+| 3D Page Turn transition                               | Pass    | Selected through plugin settings and used for page navigation                                             |
+| Arrow, Page Up/Down, Space, Home/End navigation       | Pending |                                                                                                           |
+| Mouse wheel navigation                                | Pending |                                                                                                           |
+| Tap zones and visible controls                        | Pending | Labelled next button passed; tap zones still need direct touch validation                                 |
+| Single-page portrait/narrow layout                    | Pass    | Stable centered page with six-page stress fixture                                                         |
+| Two-page landscape/wide layout                        | Pass    | Sidebar toggle reflowed the fixture to four two-page spreads                                              |
+| Responsive repagination preserves approximate passage | Pass    | Page 3/4 reflowed to page 4/6 at the equivalent reading fraction                                          |
+| Immersive mode enters and exits safely                | Pending |                                                                                                           |
+| Light and dark Obsidian themes                        | Pending |                                                                                                           |
+| Minimum and maximum font/spacing settings             | Pending |                                                                                                           |
+| Reduced motion                                        | Pending |                                                                                                           |
+| Increased contrast and visible focus                  | Pending |                                                                                                           |
+| Keyboard-only operation                               | Pending |                                                                                                           |
+| Screen-reader labels and page announcements           | Pending | Accessibility tree exposes labelled reader, buttons, headings, and progress; VoiceOver validation remains |
 
 ## Rendered Markdown compatibility
 
-| Content                     | Status  | Notes                      |
-| --------------------------- | ------- | -------------------------- |
-| Long prose and headings     | Pending |                            |
-| Images                      | Pending |                            |
-| Callouts                    | Pending |                            |
-| Tables                      | Pending |                            |
-| Inline and fenced code      | Pending |                            |
-| Dataview                    | Pending | Requires test-vault plugin |
-| Tasks                       | Pending | Requires test-vault plugin |
-| Mermaid                     | Pending |                            |
-| Note and block embeds       | Pending |                            |
-| PDFs                        | Pending |                            |
-| Audio and video             | Pending |                            |
-| Footnotes                   | Pending |                            |
-| Internal and external links | Pending |                            |
-| Checkboxes                  | Pending |                            |
-| Oversized content fallback  | Pending | Not implemented yet        |
+| Content                     | Status  | Notes                                                                               |
+| --------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| Long prose and headings     | Pass    | Stress fixture paginates across responsive one- and two-page layouts                |
+| Images                      | Pass    | Local SVG cover rendered in the reader                                              |
+| Callouts                    | Pass    | Native rendered callout visible and themed                                          |
+| Tables                      | Pass    | Native rendered table visible and aligned                                           |
+| Inline and fenced code      | Pass    | Both forms rendered through `MarkdownRenderer`                                      |
+| Dataview                    | Pending | Requires test-vault plugin                                                          |
+| Tasks                       | Pending | Requires test-vault plugin                                                          |
+| Mermaid                     | Pass    | Diagram rendered in the stress fixture                                              |
+| Note and block embeds       | Pass    | Embedded note rendered with its heading and backlink                                |
+| PDFs                        | Pending |                                                                                     |
+| Audio and video             | Pending |                                                                                     |
+| Footnotes                   | Pass    | Footnote content and return link rendered                                           |
+| Internal and external links | Pending | Both render and remain excluded from page turns; full navigation automation remains |
+| Checkboxes                  | Pass    | Checkbox changed state without changing the current reader page                     |
+| Oversized content fallback  | Pending | Not implemented yet                                                                 |
 
 ## Touch and mobile conflicts
 
-| Workflow                                                   | Status                   | Notes                                      |
-| ---------------------------------------------------------- | ------------------------ | ------------------------------------------ |
-| Swipe page turns                                           | Pending                  |                                            |
-| Text selection does not turn a page                        | Pending                  |                                            |
-| Links and checkboxes remain interactive                    | Pending                  |                                            |
-| Embedded horizontal/vertical scrolling wins over page turn | Pending                  |                                            |
-| Operating-system edge gesture remains available            | Pending                  |                                            |
-| Obsidian sidebars remain usable                            | Pending                  |                                            |
-| Mobile portrait and landscape                              | Pending                  | Simulator or device                        |
-| iPad single/two-page layouts                               | Pending                  | Simulator or device                        |
-| Physical iPad touch, orientation, and VoiceOver            | Physical device required | Final device availability must be recorded |
+| Workflow                                                   | Status                   | Notes                                                                                     |
+| ---------------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------- |
+| Swipe page turns                                           | Pending                  |                                                                                           |
+| Text selection does not turn a page                        | Pending                  |                                                                                           |
+| Links and checkboxes remain interactive                    | Pending                  | Checkbox passed; link was excluded from page turning but macOS automation only focused it |
+| Embedded horizontal/vertical scrolling wins over page turn | Pending                  |                                                                                           |
+| Operating-system edge gesture remains available            | Pending                  |                                                                                           |
+| Obsidian sidebars remain usable                            | Pending                  |                                                                                           |
+| Mobile portrait and landscape                              | Pending                  | Simulator or device                                                                       |
+| iPad single/two-page layouts                               | Pending                  | Simulator or device                                                                       |
+| Physical iPad touch, orientation, and VoiceOver            | Physical device required | Final device availability must be recorded                                                |
 
 ## Books and study tools
 
