@@ -67,3 +67,16 @@ export function calculateTotalPages(scrollWidth: number, gap: number, stride: nu
 	if (!Number.isFinite(scrollWidth) || !Number.isFinite(stride) || stride <= 0) return 1;
 	return Math.max(1, Math.round((Math.max(0, scrollWidth) + Math.max(0, gap)) / stride));
 }
+
+export function calculateTranslation(
+	alignmentOffset: number,
+	page: number,
+	stride: number,
+	dragOffset = 0,
+): number {
+	const safeAlignment = Number.isFinite(alignmentOffset) ? alignmentOffset : 0;
+	const safePage = Number.isFinite(page) ? Math.max(0, page) : 0;
+	const safeStride = Number.isFinite(stride) ? Math.max(0, stride) : 0;
+	const safeDrag = Number.isFinite(dragOffset) ? dragOffset : 0;
+	return safeAlignment - safePage * safeStride + safeDrag;
+}

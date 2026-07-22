@@ -69,7 +69,8 @@
 	margin-top: 0;
 }
 
-.books-content.books-dragging {
+.books-content.books-dragging,
+.books-content.books-measuring {
 	transition: none !important;
 }
 

@@ -14,6 +14,7 @@ import type ObsidianBooksPlugin from '../main';
 import { pageStatus, t } from '../i18n';
 import {
 	calculateGeometry,
+	calculateTranslation,
 	calculateTotalPages,
 	clampPage,
 	fractionToPage,
@@ -50,6 +51,7 @@ export class ReaderView extends ItemView {
 	private totalPages = 1;
 	private pageStride = 0;
 	private columnGap = 0;
+	private alignmentOffset = 0;
 	private measured = false;
 	private pendingFraction: number | null = null;
 	private renderGeneration = 0;
@@ -205,8 +207,9 @@ export class ReaderView extends ItemView {
 		this.renderChild = new Component();
 		this.addChild(this.renderChild);
 		this.content.empty();
-		this.content.setCssProps({ transform: 'translateX(0px)' });
+		this.content.setCssProps({ transform: 'none' });
 		this.page = 0;
+		this.alignmentOffset = 0;
 		this.measured = false;
 
 		try {
@@ -315,6 +318,15 @@ export class ReaderView extends ItemView {
 		this.content.style.columnWidth = `${geometry.pageWidth}px`;
 		this.columnGap = computedGap;
 		this.pageStride = geometry.stride;
+
+		// Chromium can anchor a transformed multi-column strip to the view rather
+		// than its centered clipping stage. Calibrate the untransformed strip to
+		// the stage before applying page translation so every column starts at the
+		// visible page edge in narrow panes, popouts, and centered max-width layouts.
+		this.content.addClass('books-measuring');
+		this.content.setCssProps({ transform: 'none' });
+		this.alignmentOffset =
+			this.stage.getBoundingClientRect().left - this.content.getBoundingClientRect().left;
 		this.totalPages = calculateTotalPages(
 			this.content.scrollWidth,
 			this.columnGap,
@@ -332,11 +344,13 @@ export class ReaderView extends ItemView {
 
 		this.page = clampPage(this.page, this.totalPages);
 		this.applyTransform();
+		this.content.removeClass('books-measuring');
 		this.updateStatus();
 	}
 
 	private applyTransform(): void {
-		this.content.style.transform = `translateX(${-this.page * this.pageStride}px)`;
+		const translateX = calculateTranslation(this.alignmentOffset, this.page, this.pageStride);
+		this.content.style.transform = `translateX(${translateX}px)`;
 	}
 
 	private goTo(requestedPage: number): void {
@@ -572,7 +586,13 @@ export class ReaderView extends ItemView {
 				if (!horizontal) return;
 				event.stopPropagation();
 				event.preventDefault();
-				this.content.style.transform = `translateX(${-this.page * this.pageStride + deltaX}px)`;
+				const translateX = calculateTranslation(
+					this.alignmentOffset,
+					this.page,
+					this.pageStride,
+					deltaX,
+				);
+				this.content.style.transform = `translateX(${translateX}px)`;
 			},
 			{ capture: true, passive: false },
 		);

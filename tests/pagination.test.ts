@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	calculateGeometry,
+	calculateTranslation,
 	calculateTotalPages,
 	clampFraction,
 	clampPage,
@@ -53,6 +54,12 @@ describe('pagination geometry', () => {
 	it('calculates page count from the column strip width', () => {
 		expect(calculateTotalPages(5000, 40, 1000)).toBe(5);
 		expect(calculateTotalPages(0, 40, 0)).toBe(1);
+	});
+
+	it('aligns a centered column strip before applying page and drag offsets', () => {
+		expect(calculateTranslation(368, 0, 637.5)).toBe(368);
+		expect(calculateTranslation(368, 1, 637.5)).toBe(-269.5);
+		expect(calculateTranslation(368, 1, 637.5, 45)).toBe(-224.5);
 	});
 });
 
