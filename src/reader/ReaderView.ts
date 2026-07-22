@@ -626,12 +626,17 @@ export class ReaderView extends ItemView {
 			this.book,
 			this.file.path,
 			this.booksPlugin.getBookmarksForBook(this.book),
+			this.booksPlugin.getAnnotationsForBook(this.book),
 			(chapterPath, fraction) => {
 				void this.openChapter(chapterPath, fraction);
 			},
 			(id) => {
 				this.booksPlugin.removeBookmark(id);
 				this.updateBookmarkButton();
+			},
+			(id) => {
+				this.booksPlugin.removeAnnotation(id);
+				void this.renderFile();
 			},
 		).open();
 	}

@@ -1,7 +1,7 @@
 import { App, Modal } from 'obsidian';
 
 import { bookmarkLocation, chapterCount, t } from '../i18n';
-import type { ReadingBookmark } from '../types';
+import type { ReadingAnnotation, ReadingBookmark } from '../types';
 import type { BookRecord } from './domain';
 
 export class BookContentsModal extends Modal {
@@ -10,8 +10,10 @@ export class BookContentsModal extends Modal {
 		private readonly book: BookRecord,
 		private readonly activeChapterPath: string,
 		private readonly bookmarks: readonly ReadingBookmark[],
+		private readonly annotations: readonly ReadingAnnotation[],
 		private readonly onChoose: (chapterPath: string, fraction: number) => void,
 		private readonly onRemoveBookmark: (id: string) => void,
+		private readonly onRemoveAnnotation: (id: string) => void,
 	) {
 		super(app);
 	}
@@ -46,38 +48,77 @@ export class BookContentsModal extends Modal {
 			});
 		});
 
-		if (!this.bookmarks.length) return;
-		this.contentEl.createEl('h3', { cls: 'books-bookmarks-heading', text: t('bookmarks') });
-		const bookmarksList = this.contentEl.createEl('ul', { cls: 'books-bookmarks-list' });
-		for (const bookmark of this.bookmarks) {
-			const item = bookmarksList.createEl('li', { cls: 'books-bookmark-item' });
-			const chapter = this.book.chapters.find(
-				(candidate) => candidate.path === bookmark.sourcePath,
-			);
-			const open = item.createEl('button', {
-				cls: 'books-bookmark-open',
-				text: bookmarkLocation(
-					chapter?.title ?? bookmark.sourcePath,
-					Math.round(bookmark.fraction * 100),
-				),
-				attr: { type: 'button' },
+		if (this.bookmarks.length) {
+			this.contentEl.createEl('h3', {
+				cls: 'books-bookmarks-heading',
+				text: t('bookmarks'),
 			});
-			open.addEventListener('click', () => {
-				this.close();
-				this.onChoose(bookmark.sourcePath, bookmark.fraction);
+			const bookmarksList = this.contentEl.createEl('ul', { cls: 'books-bookmarks-list' });
+			for (const bookmark of this.bookmarks) {
+				const item = bookmarksList.createEl('li', { cls: 'books-bookmark-item' });
+				const chapter = this.book.chapters.find(
+					(candidate) => candidate.path === bookmark.sourcePath,
+				);
+				const open = item.createEl('button', {
+					cls: 'books-bookmark-open',
+					text: bookmarkLocation(
+						chapter?.title ?? bookmark.sourcePath,
+						Math.round(bookmark.fraction * 100),
+					),
+					attr: { type: 'button' },
+				});
+				open.addEventListener('click', () => {
+					this.close();
+					this.onChoose(bookmark.sourcePath, bookmark.fraction);
+				});
+				const remove = item.createEl('button', {
+					cls: 'books-bookmark-remove',
+					text: t('remove'),
+					attr: {
+						type: 'button',
+						'aria-label': `${t('removeBookmark')}: ${open.textContent}`,
+					},
+				});
+				remove.addEventListener('click', () => {
+					this.onRemoveBookmark(bookmark.id);
+					item.remove();
+				});
+			}
+		}
+
+		if (this.annotations.length) {
+			this.contentEl.createEl('h3', {
+				cls: 'books-bookmarks-heading',
+				text: t('annotations'),
 			});
-			const remove = item.createEl('button', {
-				cls: 'books-bookmark-remove',
-				text: t('remove'),
-				attr: {
-					type: 'button',
-					'aria-label': `${t('removeBookmark')}: ${open.textContent}`,
-				},
+			const annotationsList = this.contentEl.createEl('ul', {
+				cls: 'books-bookmarks-list',
 			});
-			remove.addEventListener('click', () => {
-				this.onRemoveBookmark(bookmark.id);
-				item.remove();
-			});
+			for (const annotation of this.annotations) {
+				const item = annotationsList.createEl('li', { cls: 'books-bookmark-item' });
+				const preview = annotation.selectedText.replace(/\s+/g, ' ').slice(0, 90);
+				const open = item.createEl('button', {
+					cls: 'books-bookmark-open',
+					text: `${annotation.kind === 'quote' ? t('quote') : t('highlight')}: ${preview}`,
+					attr: { type: 'button' },
+				});
+				open.addEventListener('click', () => {
+					this.close();
+					this.onChoose(annotation.sourcePath, annotation.fraction);
+				});
+				const remove = item.createEl('button', {
+					cls: 'books-bookmark-remove',
+					text: t('remove'),
+					attr: {
+						type: 'button',
+						'aria-label': `${t('removeAnnotation')}: ${preview}`,
+					},
+				});
+				remove.addEventListener('click', () => {
+					this.onRemoveAnnotation(annotation.id);
+					item.remove();
+				});
+			}
 		}
 	}
 

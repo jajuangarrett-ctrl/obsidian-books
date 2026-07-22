@@ -252,7 +252,8 @@ export default class ObsidianBooksPlugin extends Plugin {
 		const chapterPaths = new Set(book.chapters.map((chapter) => chapter.path));
 		return this.annotations
 			.filter(
-				(annotation) => annotation.bookId === book.id || chapterPaths.has(annotation.sourcePath),
+				(annotation) =>
+					annotation.bookId === book.id || chapterPaths.has(annotation.sourcePath),
 			)
 			.sort((left, right) => {
 				const leftChapter = book.chapters.findIndex(
