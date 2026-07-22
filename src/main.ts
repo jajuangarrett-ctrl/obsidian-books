@@ -1,25 +1,41 @@
 import { Notice, Platform, Plugin, TAbstractFile, TFile, type WorkspaceLeaf } from 'obsidian';
 
 import { t } from './i18n';
+import { BookLibrary } from './books/discovery';
+import type { BookRecord } from './books/domain';
+import { BookshelfView, VIEW_TYPE_BOOKSHELF } from './bookshelf/BookshelfView';
 import { ReaderView, VIEW_TYPE_READER } from './reader/ReaderView';
 import { migratePersistedData } from './settings-data';
 import { ReaderSettingTab } from './settings-tab';
-import type { PersistedData, PositionMap, ReaderSettings } from './types';
+import type {
+	BookProgressMap,
+	PersistedData,
+	PositionMap,
+	ReaderSettings,
+} from './types';
 
 export default class ObsidianBooksPlugin extends Plugin {
 	public settings!: ReaderSettings;
 	public positions: PositionMap = {};
+	public bookProgress: BookProgressMap = {};
 
 	private lastSaved = '';
 	private immersiveDocument: Document | null = null;
+	private library!: BookLibrary;
+	private cachedBooks: BookRecord[] | null = null;
 
 	public async onload(): Promise<void> {
 		const data = migratePersistedData(await this.loadData());
 		this.settings = data.settings;
 		this.positions = data.positions;
+		this.bookProgress = data.bookProgress;
+		this.library = new BookLibrary(this.app);
 		this.lastSaved = JSON.stringify(this.dataBlob());
 
 		this.registerView(VIEW_TYPE_READER, (leaf) => new ReaderView(leaf, this));
+		this.registerView(VIEW_TYPE_BOOKSHELF, (leaf) => new BookshelfView(leaf, this));
+
+		this.addRibbonIcon('library', t('ribbonBookshelf'), () => void this.openBookshelf());
 
 		this.addRibbonIcon('book-open', t('ribbonOpen'), () => {
 			const file = this.app.workspace.getActiveFile();
@@ -36,6 +52,12 @@ export default class ObsidianBooksPlugin extends Plugin {
 				if (!checking) void this.openReader(file);
 				return true;
 			},
+		});
+
+		this.addCommand({
+			id: 'open-bookshelf',
+			name: t('commandBookshelf'),
+			callback: () => void this.openBookshelf(),
 		});
 
 		this.registerEvent(
@@ -59,6 +81,16 @@ export default class ObsidianBooksPlugin extends Plugin {
 			this.app.vault.on('rename', (file, oldPath) => this.handleRename(file, oldPath)),
 		);
 		this.registerEvent(this.app.vault.on('delete', (file) => this.handleDelete(file)));
+		this.registerEvent(
+			this.app.vault.on('create', () => {
+				this.invalidateBooks();
+			}),
+		);
+		this.registerEvent(
+			this.app.metadataCache.on('changed', () => {
+				this.invalidateBooks();
+			}),
+		);
 		this.registerEvent(
 			this.app.vault.on('modify', (file) => {
 				if (!(file instanceof TFile)) return;
@@ -97,6 +129,64 @@ export default class ObsidianBooksPlugin extends Plugin {
 	}
 
 	public async openReader(file: TFile): Promise<void> {
+		const book = this.resolveBookForFile(file);
+		const targetPath =
+			book.manifestPath === file.path
+				? this.preferredChapterPath(book)
+				: file.path;
+		const target = this.app.vault.getAbstractFileByPath(targetPath);
+		if (!(target instanceof TFile)) {
+			new Notice(t('notFound'));
+			return;
+		}
+		await this.openReaderTarget(target, book.id);
+	}
+
+	public async openBook(book: BookRecord, chapterPath?: string): Promise<void> {
+		const targetPath = chapterPath ?? this.preferredChapterPath(book);
+		const target = this.app.vault.getAbstractFileByPath(targetPath);
+		if (!(target instanceof TFile)) {
+			new Notice(t('notFound'));
+			return;
+		}
+		await this.openReaderTarget(target, book.id);
+	}
+
+	public async openBookshelf(): Promise<void> {
+		let leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_BOOKSHELF)[0];
+		if (!leaf) {
+			leaf = this.app.workspace.getLeaf('tab');
+			await leaf.setViewState({ type: VIEW_TYPE_BOOKSHELF, active: true });
+		}
+		await this.app.workspace.revealLeaf(leaf);
+	}
+
+	public getBooks(): BookRecord[] {
+		this.cachedBooks ??= this.library.discover(Object.keys(this.positions));
+		return this.cachedBooks;
+	}
+
+	public resolveBookForFile(file: TFile, hintedId?: string): BookRecord {
+		return this.library.findForFile(file, Object.keys(this.positions), hintedId);
+	}
+
+	public resolveCoverUrl(book: BookRecord): string | undefined {
+		return this.library.resolveCoverUrl(book);
+	}
+
+	public getBookFraction(book: BookRecord): number {
+		const progress = this.bookProgress[book.id];
+		if (!progress || !book.chapters.length) return 0;
+		const index = book.chapters.findIndex((chapter) => chapter.path === progress.chapterPath);
+		if (index < 0) return 0;
+		return (index + progress.fraction) / book.chapters.length;
+	}
+
+	public updateBookProgress(book: BookRecord, chapterPath: string, fraction: number): void {
+		this.bookProgress[book.id] = { chapterPath, fraction };
+	}
+
+	private async openReaderTarget(file: TFile, bookId: string): Promise<void> {
 		let leaf: WorkspaceLeaf;
 		try {
 			if (this.settings.openIn === 'current') leaf = this.app.workspace.getLeaf(false);
@@ -108,7 +198,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 			await leaf.setViewState({
 				type: VIEW_TYPE_READER,
 				active: true,
-				state: { filePath: file.path },
+				state: { filePath: file.path, bookId },
 			});
 			await this.app.workspace.revealLeaf(leaf);
 			this.applyImmersive(leaf);
@@ -170,9 +260,10 @@ export default class ObsidianBooksPlugin extends Plugin {
 
 	private dataBlob(): PersistedData {
 		return {
-			schemaVersion: 1,
+			schemaVersion: 2,
 			settings: this.settings,
 			positions: this.positions,
+			bookProgress: this.bookProgress,
 		};
 	}
 
@@ -181,6 +272,28 @@ export default class ObsidianBooksPlugin extends Plugin {
 			.getLeavesOfType(VIEW_TYPE_READER)
 			.map((leaf) => leaf.view)
 			.filter((view): view is ReaderView => view instanceof ReaderView);
+	}
+
+	private bookshelfViews(): BookshelfView[] {
+		return this.app.workspace
+			.getLeavesOfType(VIEW_TYPE_BOOKSHELF)
+			.map((leaf) => leaf.view)
+			.filter((view): view is BookshelfView => view instanceof BookshelfView);
+	}
+
+	private preferredChapterPath(book: BookRecord): string {
+		const savedPath = this.bookProgress[book.id]?.chapterPath;
+		return (
+			book.chapters.find((chapter) => chapter.path === savedPath)?.path ??
+			book.chapters[0]?.path ??
+			book.manifestPath ??
+			''
+		);
+	}
+
+	private invalidateBooks(): void {
+		this.cachedBooks = null;
+		for (const view of this.bookshelfViews()) void view.refresh();
 	}
 
 	private documentForLeaf(leaf: WorkspaceLeaf | null): Document {
@@ -206,6 +319,23 @@ export default class ObsidianBooksPlugin extends Plugin {
 		for (const view of this.readerViews()) {
 			if (view.file) view.filePath = view.file.path;
 		}
+
+		const rewrite = (path: string): string => {
+			if (path === oldPath) return file.path;
+			const prefix = `${oldPath}/`;
+			return path.startsWith(prefix) ? `${file.path}/${path.slice(prefix.length)}` : path;
+		};
+		for (const [bookId, progress] of Object.entries(this.bookProgress)) {
+			const prefix = bookId.startsWith('folder:') ? 'folder:' : 'note:';
+			const rewrittenId = `${prefix}${rewrite(bookId.slice(prefix.length))}`;
+			const rewrittenProgress = {
+				...progress,
+				chapterPath: rewrite(progress.chapterPath),
+			};
+			if (rewrittenId !== bookId) delete this.bookProgress[bookId];
+			this.bookProgress[rewrittenId] = rewrittenProgress;
+		}
+		this.invalidateBooks();
 	}
 
 	private handleDelete(file: TAbstractFile): void {
@@ -221,5 +351,18 @@ export default class ObsidianBooksPlugin extends Plugin {
 			view.filePath = null;
 			void view.renderFile();
 		}
+
+		for (const [bookId, progress] of Object.entries(this.bookProgress)) {
+			const sourcePath = bookId.slice(bookId.indexOf(':') + 1);
+			if (
+				sourcePath === file.path ||
+				sourcePath.startsWith(prefix) ||
+				progress.chapterPath === file.path ||
+				progress.chapterPath.startsWith(prefix)
+			) {
+				delete this.bookProgress[bookId];
+			}
+		}
+		this.invalidateBooks();
 	}
 }
