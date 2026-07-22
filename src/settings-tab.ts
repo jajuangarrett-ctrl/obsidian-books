@@ -15,7 +15,7 @@ export class ReaderSettingTab extends PluginSettingTab {
 	public display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl('h2', { text: t('settingsTitle') });
+		new Setting(containerEl).setName(t('settingsTitle')).setHeading();
 
 		const save = async (): Promise<void> => {
 			await this.booksPlugin.saveAll();
@@ -42,7 +42,6 @@ export class ReaderSettingTab extends PluginSettingTab {
 				slider
 					.setLimits(0, 1000, 20)
 					.setValue(this.booksPlugin.settings.maxPageWidth)
-					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.booksPlugin.settings.maxPageWidth = value;
 						await save();
@@ -56,7 +55,6 @@ export class ReaderSettingTab extends PluginSettingTab {
 				slider
 					.setLimits(0.6, 2, 0.05)
 					.setValue(this.booksPlugin.settings.fontSize)
-					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.booksPlugin.settings.fontSize = value;
 						await save();
@@ -67,7 +65,6 @@ export class ReaderSettingTab extends PluginSettingTab {
 			slider
 				.setLimits(1.2, 2.4, 0.05)
 				.setValue(this.booksPlugin.settings.lineHeight)
-				.setDynamicTooltip()
 				.onChange(async (value) => {
 					this.booksPlugin.settings.lineHeight = value;
 					await save();
@@ -78,7 +75,6 @@ export class ReaderSettingTab extends PluginSettingTab {
 			slider
 				.setLimits(0.5, 5, 0.25)
 				.setValue(this.booksPlugin.settings.columnGap)
-				.setDynamicTooltip()
 				.onChange(async (value) => {
 					this.booksPlugin.settings.columnGap = value;
 					await save();

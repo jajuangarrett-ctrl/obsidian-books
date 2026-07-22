@@ -69,6 +69,10 @@
 	margin-top: 0;
 }
 
+.books-content.books-dragging {
+	transition: none !important;
+}
+
 .books-title {
 	padding-bottom: 0.3em;
 	margin: 0 0 0.8em;

@@ -166,7 +166,8 @@ export class ReaderView extends ItemView {
 		this.popScope();
 		this.resizeObserver?.disconnect();
 		this.resizeObserver = null;
-		if (this.animationFrame !== null) cancelAnimationFrame(this.animationFrame);
+		if (this.animationFrame !== null)
+			this.contentEl.win.cancelAnimationFrame(this.animationFrame);
 		if (this.repaginateTimer !== null) window.clearTimeout(this.repaginateTimer);
 		if (this.turnTimer !== null) window.clearTimeout(this.turnTimer);
 		this.animationFrame = null;
@@ -204,7 +205,7 @@ export class ReaderView extends ItemView {
 		this.renderChild = new Component();
 		this.addChild(this.renderChild);
 		this.content.empty();
-		this.content.style.transform = 'translateX(0px)';
+		this.content.setCssProps({ transform: 'translateX(0px)' });
 		this.page = 0;
 		this.measured = false;
 
@@ -238,7 +239,7 @@ export class ReaderView extends ItemView {
 		this.pendingFraction = savedPosition?.fraction ?? null;
 		this.watchMediaLoading();
 
-		this.animationFrame = requestAnimationFrame(() => {
+		this.animationFrame = this.contentEl.win.requestAnimationFrame(() => {
 			this.animationFrame = null;
 			if (generation !== this.renderGeneration || !this.content.isConnected) return;
 			this.measure();
@@ -253,6 +254,7 @@ export class ReaderView extends ItemView {
 		this.content.style.setProperty('--books-font-size', `${settings.fontSize}em`);
 		this.content.style.setProperty('--books-line-height', String(settings.lineHeight));
 		this.content.style.setProperty('--books-column-gap', `${settings.columnGap}em`);
+		this.content.removeClass('books-dragging');
 		this.content.style.transition =
 			settings.transition === 'slide' ? 'transform 220ms ease' : 'none';
 		this.stage.toggleClass('books-page-turn-mode', settings.transition === 'page-turn');
@@ -283,7 +285,7 @@ export class ReaderView extends ItemView {
 	private watchMediaLoading(): void {
 		this.content.querySelectorAll('img, audio, video').forEach((element) => {
 			const handleLoad = (): void => this.debouncedRemeasure?.();
-			if (element instanceof HTMLImageElement) {
+			if (element.instanceOf(HTMLImageElement)) {
 				if (!element.complete) element.addEventListener('load', handleLoad, { once: true });
 			} else {
 				element.addEventListener('loadedmetadata', handleLoad, { once: true });
@@ -296,7 +298,8 @@ export class ReaderView extends ItemView {
 		const viewportWidth = this.viewport.clientWidth;
 		if (!viewportWidth) return;
 
-		const computedGap = Number.parseFloat(getComputedStyle(this.content).columnGap) || 0;
+		const computedGap =
+			Number.parseFloat(this.content.win.getComputedStyle(this.content).columnGap) || 0;
 		const geometry = calculateGeometry({
 			viewportWidth,
 			columnGap: computedGap,
@@ -322,7 +325,7 @@ export class ReaderView extends ItemView {
 		if (this.pendingFraction !== null) {
 			this.page = fractionToPage(this.pendingFraction, this.totalPages);
 			const mediaStillLoading = Array.from(this.content.querySelectorAll('img')).some(
-				(image) => image instanceof HTMLImageElement && !image.complete,
+				(image) => image.instanceOf(HTMLImageElement) && !image.complete,
 			);
 			if (!mediaStillLoading) this.pendingFraction = null;
 		}
@@ -472,8 +475,8 @@ export class ReaderView extends ItemView {
 		if (!(target instanceof Element)) return false;
 		let element: Element | null = target;
 		while (element && element !== this.viewport) {
-			if (element instanceof HTMLElement) {
-				const style = getComputedStyle(element);
+			if (element.instanceOf(HTMLElement)) {
+				const style = element.win.getComputedStyle(element);
 				const scrollsX =
 					/(auto|scroll)/.test(style.overflowX) &&
 					element.scrollWidth > element.clientWidth;
@@ -541,7 +544,7 @@ export class ReaderView extends ItemView {
 				dragging = true;
 				decided = false;
 				horizontal = false;
-				this.content.style.transition = 'none';
+				this.content.addClass('books-dragging');
 			},
 			{ capture: true, passive: true },
 		);

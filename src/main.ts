@@ -110,11 +110,11 @@ export default class ObsidianBooksPlugin extends Plugin {
 				active: true,
 				state: { filePath: file.path },
 			});
-			this.app.workspace.revealLeaf(leaf);
+			await this.app.workspace.revealLeaf(leaf);
 			this.applyImmersive(leaf);
 		} catch (error) {
 			console.error('Obsidian Books could not open the reader.', error);
-			new Notice('Obsidian Books could not open this note.');
+			new Notice(t('openError'));
 		}
 	}
 
@@ -123,7 +123,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 			view.applySettings();
 			view.requestRepagination();
 		}
-		this.applyImmersive(this.app.workspace.activeLeaf);
+		this.applyImmersive(this.app.workspace.getActiveViewOfType(ReaderView)?.leaf ?? null);
 	}
 
 	public applyImmersive(leaf: WorkspaceLeaf | null): void {
@@ -157,7 +157,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 
 	public releaseImmersive(ownerDocument: Document): void {
 		if (this.immersiveDocument !== ownerDocument) return;
-		const activeLeaf = this.app.workspace.activeLeaf;
+		const activeLeaf = this.app.workspace.getActiveViewOfType(ReaderView)?.leaf ?? null;
 		if (
 			activeLeaf?.view instanceof ReaderView &&
 			this.documentForLeaf(activeLeaf) === ownerDocument
