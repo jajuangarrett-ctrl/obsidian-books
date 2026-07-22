@@ -77,6 +77,7 @@ export class ReaderView extends ItemView {
 	private lastTouchAt = 0;
 	private chapterMinutes = 1;
 	private verticalMode = false;
+	private verticalFraction = 0;
 
 	private viewport!: HTMLElement;
 	private chapterBar!: HTMLElement;
@@ -282,7 +283,7 @@ export class ReaderView extends ItemView {
 		this.animationFrame = null;
 		this.repaginateTimer = null;
 		this.turnTimer = null;
-		this.savePosition();
+		this.savePosition(this.verticalMode ? this.verticalFraction : undefined);
 		this.disposeRenderedMarkdown();
 
 		const ownerDocument = this.contentEl.ownerDocument;
@@ -535,6 +536,7 @@ export class ReaderView extends ItemView {
 	}
 
 	private setVerticalMode(enabled: boolean): void {
+		if (!enabled && this.verticalMode) this.verticalFraction = 0;
 		this.verticalMode = enabled;
 		this.viewport.toggleClass('books-vertical-mode', enabled);
 		if (enabled) return;
@@ -580,8 +582,9 @@ export class ReaderView extends ItemView {
 
 	private restoreVerticalFraction(fraction: number): void {
 		if (!this.verticalMode) return;
+		this.verticalFraction = Math.max(0, Math.min(fraction, 1));
 		const maximum = Math.max(0, this.viewport.scrollHeight - this.viewport.clientHeight);
-		this.viewport.scrollTop = maximum * Math.max(0, Math.min(fraction, 1));
+		this.viewport.scrollTop = maximum * this.verticalFraction;
 		this.updateStatus();
 	}
 
@@ -702,10 +705,10 @@ export class ReaderView extends ItemView {
 		this.updateBookmarkButton();
 	}
 
-	private savePosition(): void {
+	private savePosition(fractionOverride?: number): void {
 		if (!this.booksPlugin.settings.rememberPosition || !this.file || !this.measured) return;
 		if (this.pendingFraction !== null) return;
-		const fraction = this.currentFraction();
+		const fraction = fractionOverride ?? this.currentFraction();
 		this.booksPlugin.positions[this.file.path] = { fraction };
 		if (this.book) this.booksPlugin.updateBookProgress(this.book, this.file.path, fraction);
 	}
@@ -739,7 +742,9 @@ export class ReaderView extends ItemView {
 	private currentFraction(): number {
 		if (!this.verticalMode) return pageToFraction(this.page, this.totalPages);
 		const maximum = Math.max(0, this.viewport.scrollHeight - this.viewport.clientHeight);
-		return maximum > 0 ? Math.max(0, Math.min(this.viewport.scrollTop / maximum, 1)) : 0;
+		return maximum > 0
+			? Math.max(0, Math.min(this.viewport.scrollTop / maximum, 1))
+			: this.verticalFraction;
 	}
 
 	private updateBookmarkButton(): void {
@@ -992,8 +997,12 @@ export class ReaderView extends ItemView {
 		this.registerEvent(this.app.workspace.on('resize', repaginate));
 		this.registerDomEvent(this.viewport, 'scroll', () => {
 			if (!this.verticalMode) return;
+			const maximum = Math.max(0, this.viewport.scrollHeight - this.viewport.clientHeight);
+			if (maximum > 0) {
+				this.verticalFraction = Math.max(0, Math.min(this.viewport.scrollTop / maximum, 1));
+			}
 			this.updateStatus();
-			this.savePosition();
+			this.savePosition(this.verticalFraction);
 		});
 	}
 
