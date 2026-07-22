@@ -68,8 +68,10 @@ content gestures, and let Obsidian manage its own system chrome and sidebars.
 - `src/books/discovery.ts`: vault-backed `Book.md`, single-note, cover, and chapter
   discovery.
 - `src/bookshelf/BookshelfView.ts`: searchable library cards and progress.
-- `src/annotations/*`: stable anchors, highlight rendering, quote persistence,
-  and source reopening.
+- `src/annotations/anchors.ts`: exact-text and surrounding-context anchor creation
+  and recovery.
+- `src/annotations/quote-format.ts`: portable Markdown quote entries and safe
+  destination filenames.
 - `src/bookshelf/*`: vault book index and bookshelf view.
 
 Pure domain and geometry modules must not import Obsidian so they can be tested
@@ -91,10 +93,11 @@ MD Reader's legacy top-level settings and `positions` map will be accepted and
 migrated. Saved locations remain normalized to `0..1`; later stable text anchors
 can refine the position without making page numbers persistent.
 
-The current schema is version 3. Bookmarks keep a source path, optional book
+The current schema is version 4. Bookmarks keep a source path, optional book
 identity, normalized in-chapter fraction, creation timestamp, and stable ID. File
 and folder rename/delete handlers update or remove these paths together with
-saved positions and book progress.
+saved positions and book progress. Annotations add selected text, heading,
+chapter metadata, destination path, and an exact/prefix/suffix/offset anchor.
 
 ## Accessibility contract
 
@@ -112,3 +115,8 @@ page or require their own scrolling surface. Content classification will mark
 incompatible chapters for a vertical reading fallback rather than clipping or
 hiding material. The fallback keeps navigation, progress, bookmarks, headings,
 and annotations available while using normal document flow.
+
+PDF embeds always use vertical flow. Other interactive and break-avoiding blocks
+switch only when their measured or estimated height exceeds the safe viewport.
+The fallback stores the viewport scroll fraction in the same normalized location
+model used by paginated chapters.

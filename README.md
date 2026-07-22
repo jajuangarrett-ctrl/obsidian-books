@@ -40,6 +40,13 @@ foundation.
   table of contents, and resume saved book/chapter progress.
 - Show estimated minutes left in the active chapter and save persistent
   chapter-aware bookmarks from the reader toolbar.
+- Highlight selected rendered text with resilient text/context anchors while
+  leaving source Markdown unchanged.
+- Save selected quotes with source, book, chapter, heading, date, location, and
+  an `obsidian://` reopen link to a shared note, a per-book note, or a configured
+  annotation folder.
+- Switch PDF embeds and oversized unbreakable or interactive blocks to vertical
+  flow with normalized, restorable scroll progress instead of clipping content.
 
 ## Folder books
 
@@ -69,6 +76,15 @@ With a Markdown note active, use any of these:
 - Select the book icon in the ribbon.
 - Run **Open current note in Obsidian Books** from the command palette.
 - Right-click a Markdown file and choose **Open in Obsidian Books**.
+
+## Highlights and quotes
+
+Select text in the rendered chapter, then use the highlight or quote button in
+the reader toolbar. Highlights and their text/context anchors live in plugin
+data; Obsidian Books does not insert markup into source chapters. Quotes can be
+written to one shared note, an `Annotations.md` beside each folder book, or one
+note per book in a configurable folder. The generated Markdown remains ordinary,
+editable vault content.
 
 ## Manual installation
 
@@ -116,7 +132,9 @@ The production bundle is `main.js`; Obsidian also requires `manifest.json` and
 
 ## Known limitations
 
-- Highlights, quotes, and annotation destinations are not implemented yet.
+- Removing a quote annotation from Contents does not delete the already-written
+  quote block from its Markdown destination; that user-owned text must be edited
+  or removed directly.
 - Very tall or unusually interactive rendered blocks still need the planned
   vertical-flow fallback and full compatibility testing.
 - Mobile and iPad behavior has not yet been validated on a physical iPad.

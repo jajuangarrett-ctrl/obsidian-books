@@ -25,6 +25,12 @@ All notable changes to Obsidian Books will be documented in this file.
   font choices; adjustable paragraph spacing and page margins.
 - Chapter reading-time estimates and persistent bookmarks that reopen a saved
   source chapter and normalized location.
+- Source-safe rendered highlights with exact text, prefix/suffix context, and
+  offset anchors that recover after nearby edits and reflow.
+- Quote capture to shared, per-book, or folder destinations with source metadata
+  and Obsidian protocol links that reopen the saved chapter location.
+- Automatic vertical-flow fallback and saved scroll progress for PDFs and
+  oversized unbreakable or interactive content.
 
 ### Changed
 

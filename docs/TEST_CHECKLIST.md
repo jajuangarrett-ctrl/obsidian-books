@@ -6,14 +6,14 @@ Statuses: **Pass**, **Fail**, **Pending**, or **Physical device required**.
 
 ## Automated validation
 
-| Check             | Status | Current evidence                                                                                                                                                        |
-| ----------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Format check      | Pass   | `npm run format:check`                                                                                                                                                  |
-| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                                                    |
-| Unit tests        | Pass   | 18 tests across pagination geometry, centered-stage translation, normalized positions, settings migration, book markers, chapter links, natural ordering, and bookmarks |
-| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                                               |
-| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                                              |
-| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                                            |
+| Check             | Status | Current evidence                                                                                                                                                                          |
+| ----------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Format check      | Pass   | `npm run format:check`                                                                                                                                                                    |
+| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                                                                      |
+| Unit tests        | Pass   | 25 tests across pagination geometry, translation, normalized positions, migration, book discovery helpers, bookmarks, text-anchor recovery, quote formatting, and fallback classification |
+| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                                                                 |
+| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                                                                |
+| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                                                              |
 
 ## Desktop reader
 
@@ -40,23 +40,23 @@ Statuses: **Pass**, **Fail**, **Pending**, or **Physical device required**.
 
 ## Rendered Markdown compatibility
 
-| Content                     | Status  | Notes                                                                               |
-| --------------------------- | ------- | ----------------------------------------------------------------------------------- |
-| Long prose and headings     | Pass    | Stress fixture paginates across responsive one- and two-page layouts                |
-| Images                      | Pass    | Local SVG cover rendered in the reader                                              |
-| Callouts                    | Pass    | Native rendered callout visible and themed                                          |
-| Tables                      | Pass    | Native rendered table visible and aligned                                           |
-| Inline and fenced code      | Pass    | Both forms rendered through `MarkdownRenderer`                                      |
-| Dataview                    | Pending | Requires test-vault plugin                                                          |
-| Tasks                       | Pending | Requires test-vault plugin                                                          |
-| Mermaid                     | Pass    | Diagram rendered in the stress fixture                                              |
-| Note and block embeds       | Pass    | Embedded note rendered with its heading and backlink                                |
-| PDFs                        | Pending |                                                                                     |
-| Audio and video             | Pending |                                                                                     |
-| Footnotes                   | Pass    | Footnote content and return link rendered                                           |
-| Internal and external links | Pending | Both render and remain excluded from page turns; full navigation automation remains |
-| Checkboxes                  | Pass    | Checkbox changed state without changing the current reader page                     |
-| Oversized content fallback  | Pending | Not implemented yet                                                                 |
+| Content                     | Status  | Notes                                                                                  |
+| --------------------------- | ------- | -------------------------------------------------------------------------------------- |
+| Long prose and headings     | Pass    | Stress fixture paginates across responsive one- and two-page layouts                   |
+| Images                      | Pass    | Local SVG cover rendered in the reader                                                 |
+| Callouts                    | Pass    | Native rendered callout visible and themed                                             |
+| Tables                      | Pass    | Native rendered table visible and aligned                                              |
+| Inline and fenced code      | Pass    | Both forms rendered through `MarkdownRenderer`                                         |
+| Dataview                    | Pending | Requires test-vault plugin                                                             |
+| Tasks                       | Pending | Requires test-vault plugin                                                             |
+| Mermaid                     | Pass    | Diagram rendered in the stress fixture                                                 |
+| Note and block embeds       | Pass    | Embedded note rendered with its heading and backlink                                   |
+| PDFs                        | Pending |                                                                                        |
+| Audio and video             | Pending |                                                                                        |
+| Footnotes                   | Pass    | Footnote content and return link rendered                                              |
+| Internal and external links | Pending | Both render and remain excluded from page turns; full navigation automation remains    |
+| Checkboxes                  | Pass    | Checkbox changed state without changing the current reader page                        |
+| Oversized content fallback  | Pass    | 50-line code fixture switched to vertical flow and retained reachable trailing content |
 
 ## Touch and mobile conflicts
 
@@ -74,15 +74,15 @@ Statuses: **Pass**, **Fail**, **Pending**, or **Physical device required**.
 
 ## Books and study tools
 
-| Workflow                                    | Status  | Notes                                                                                                              |
-| ------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
-| Single-note book                            | Pass    | Recently read stress fixture appears and opens from the bookshelf                                                  |
-| Folder book with `Book.md`                  | Pass    | Three-chapter dedicated-vault fixture discovered from its manifest                                                 |
-| Ordered chapters and one-chapter loading    | Pass    | Declared 01/02/10 order preserved; accessibility tree contained only the active chapter                            |
-| Covers and metadata                         | Pass    | SVG cover, title, author, and chapter count rendered on the shelf                                                  |
-| Table of contents and chapter navigation    | Pass    | Next/previous boundaries and direct Contents jump passed                                                           |
-| Bookmarks                                   | Pass    | Added from the toolbar, exposed in Contents, persisted across vault close/reopen, and restored by chapter/fraction |
-| Highlights survive repagination             | Pending | Not implemented                                                                                                    |
-| Quotes write to each configured destination | Pending | Not implemented                                                                                                    |
-| Quote reopens source near passage           | Pending | Not implemented                                                                                                    |
-| Source Markdown unchanged by default        | Pending | Not implemented                                                                                                    |
+| Workflow                                    | Status | Notes                                                                                                              |
+| ------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
+| Single-note book                            | Pass   | Recently read stress fixture appears and opens from the bookshelf                                                  |
+| Folder book with `Book.md`                  | Pass   | Three-chapter dedicated-vault fixture discovered from its manifest                                                 |
+| Ordered chapters and one-chapter loading    | Pass   | Declared 01/02/10 order preserved; accessibility tree contained only the active chapter                            |
+| Covers and metadata                         | Pass   | SVG cover, title, author, and chapter count rendered on the shelf                                                  |
+| Table of contents and chapter navigation    | Pass   | Next/previous boundaries and direct Contents jump passed                                                           |
+| Bookmarks                                   | Pass   | Added from the toolbar, exposed in Contents, persisted across vault close/reopen, and restored by chapter/fraction |
+| Highlights survive repagination             | Pass   | Highlight persisted across plugin reload and recovered after nearby source insertion shifted offsets               |
+| Quotes write to each configured destination | Pass   | Shared note, adjacent per-book `Annotations.md`, and configured annotation folder all passed                       |
+| Quote reopens source near passage           | Pass   | Generated `obsidian://books-open` link reopened the saved book/chapter/fraction                                    |
+| Source Markdown unchanged by default        | Pass   | Highlight and quote capture left the source chapter free of injected markers                                       |
