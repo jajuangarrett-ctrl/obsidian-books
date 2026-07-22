@@ -402,7 +402,10 @@ export default class ObsidianBooksPlugin extends Plugin {
 			return normalizePath(this.ensureMarkdownExtension(settings.quotesNotePath));
 		}
 		if (settings.quoteDestination === 'per-book') {
-			const name = book.kind === 'folder' ? 'Annotations.md' : `${safeAnnotationFilename(book.title)} Annotations.md`;
+			const name =
+				book.kind === 'folder'
+					? 'Annotations.md'
+					: `${safeAnnotationFilename(book.title)} Annotations.md`;
 			return normalizePath(book.rootPath ? `${book.rootPath}/${name}` : name);
 		}
 		return normalizePath(

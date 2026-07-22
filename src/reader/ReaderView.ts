@@ -12,9 +12,11 @@ import {
 } from 'obsidian';
 
 import type ObsidianBooksPlugin from '../main';
+import { createTextAnchor, locateTextAnchor } from '../annotations/anchors';
 import { BookContentsModal } from '../books/BookContentsModal';
 import type { BookRecord } from '../books/domain';
 import { chapterStatus, minutesLeft, pageStatus, t } from '../i18n';
+import type { ReadingAnnotation, TextAnchor } from '../types';
 import {
 	calculateGeometry,
 	calculateTranslation,
@@ -32,6 +34,13 @@ interface ReaderViewState {
 	initialFraction?: number;
 }
 
+interface SelectionCapture {
+	anchor: TextAnchor;
+	selectedText: string;
+	heading?: string;
+	fraction: number;
+}
+
 const INTERACTIVE_SELECTOR = [
 	'a',
 	'input',
@@ -42,6 +51,7 @@ const INTERACTIVE_SELECTOR = [
 	'.task-list-item-checkbox',
 	'.callout-fold',
 	'.footnote-link',
+	'.books-highlight',
 	'audio',
 	'video',
 	'iframe',
@@ -70,6 +80,8 @@ export class ReaderView extends ItemView {
 	private chapterBar!: HTMLElement;
 	private contentsButton!: HTMLButtonElement;
 	private bookmarkButton!: HTMLButtonElement;
+	private highlightButton!: HTMLButtonElement;
+	private quoteButton!: HTMLButtonElement;
 	private bookTitleText!: HTMLElement;
 	private chapterTitleText!: HTMLElement;
 	private previousChapterButton!: HTMLButtonElement;
@@ -80,6 +92,7 @@ export class ReaderView extends ItemView {
 	private nextButton!: HTMLButtonElement;
 	private progressFill!: HTMLElement;
 	private statusText!: HTMLElement;
+	private selectionCapture: SelectionCapture | null = null;
 
 	private renderChild: Component | null = null;
 	private resizeObserver: ResizeObserver | null = null;
@@ -153,6 +166,18 @@ export class ReaderView extends ItemView {
 			text: '☆',
 			attr: { type: 'button', 'aria-label': t('addBookmark') },
 		});
+		this.highlightButton = chapterLeading.createEl('button', {
+			cls: 'books-chapter-button books-highlight-button',
+			text: '▰',
+			attr: { type: 'button', 'aria-label': t('highlightSelection') },
+		});
+		this.quoteButton = chapterLeading.createEl('button', {
+			cls: 'books-chapter-button books-quote-button',
+			text: '❝',
+			attr: { type: 'button', 'aria-label': t('saveQuote') },
+		});
+		this.highlightButton.disabled = true;
+		this.quoteButton.disabled = true;
 		const chapterLabels = this.chapterBar.createDiv({ cls: 'books-chapter-labels' });
 		this.bookTitleText = chapterLabels.createDiv({ cls: 'books-book-title' });
 		this.chapterTitleText = chapterLabels.createDiv({ cls: 'books-chapter-title' });
@@ -213,6 +238,17 @@ export class ReaderView extends ItemView {
 			event.stopPropagation();
 			this.toggleBookmark();
 		});
+		for (const button of [this.highlightButton, this.quoteButton]) {
+			this.registerDomEvent(button, 'mousedown', (event) => event.preventDefault());
+		}
+		this.registerDomEvent(this.highlightButton, 'click', (event) => {
+			event.stopPropagation();
+			this.saveSelection('highlight');
+		});
+		this.registerDomEvent(this.quoteButton, 'click', (event) => {
+			event.stopPropagation();
+			this.saveSelection('quote');
+		});
 		this.registerDomEvent(this.previousChapterButton, 'click', (event) => {
 			event.stopPropagation();
 			void this.changeChapter(-1, 1);
@@ -227,6 +263,7 @@ export class ReaderView extends ItemView {
 		this.registerDomEvent(this.viewport, 'focusout', () => this.popScope());
 
 		this.setupInput();
+		this.setupSelectionCapture();
 		this.setupRepagination();
 		this.applySettings();
 		if (this.file) await this.renderFile();
@@ -307,6 +344,7 @@ export class ReaderView extends ItemView {
 			});
 			this.content.insertBefore(title, this.content.firstChild);
 		}
+		this.applyStoredHighlights();
 
 		const savedPosition = this.booksPlugin.settings.rememberPosition
 			? this.booksPlugin.positions[sourceFile.path]
@@ -607,6 +645,148 @@ export class ReaderView extends ItemView {
 			.trim()
 			.split(/\s+/u)
 			.filter(Boolean).length;
+	}
+
+	private setupSelectionCapture(): void {
+		const update = (): void => {
+			this.selectionCapture = this.captureSelection();
+			const enabled = Boolean(this.selectionCapture);
+			this.highlightButton.disabled = !enabled;
+			this.quoteButton.disabled = !enabled;
+		};
+		this.registerDomEvent(this.viewport, 'mouseup', update);
+		this.registerDomEvent(this.viewport, 'keyup', update);
+		this.registerDomEvent(this.viewport, 'touchend', () => {
+			window.setTimeout(update, 0);
+		});
+	}
+
+	private captureSelection(): SelectionCapture | null {
+		const selection = this.contentEl.ownerDocument.getSelection();
+		if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) return null;
+		const range = selection.getRangeAt(0);
+		if (!this.content.contains(range.commonAncestorContainer)) return null;
+		const rawText = range.toString();
+		const selectedText = rawText.trim();
+		if (!selectedText) return null;
+
+		const before = range.cloneRange();
+		before.selectNodeContents(this.content);
+		before.setEnd(range.startContainer, range.startOffset);
+		const leadingWhitespace = rawText.length - rawText.trimStart().length;
+		const startOffset = before.toString().length + leadingWhitespace;
+		const fullText = this.content.textContent ?? '';
+		const anchor = createTextAnchor(fullText, startOffset, startOffset + selectedText.length);
+		return {
+			anchor,
+			selectedText,
+			heading: this.headingForRange(range),
+			fraction: this.currentFraction(),
+		};
+	}
+
+	private headingForRange(range: Range): string | undefined {
+		const startElement =
+			range.startContainer.instanceOf(Element)
+				? range.startContainer
+				: range.startContainer.parentElement;
+		if (!startElement) return undefined;
+		const ancestor = startElement.closest('h1, h2, h3, h4, h5, h6');
+		if (ancestor?.textContent?.trim()) return ancestor.textContent.trim();
+
+		let preceding: Element | undefined;
+		for (const heading of Array.from(this.content.querySelectorAll('h1, h2, h3, h4, h5, h6'))) {
+			if (heading.compareDocumentPosition(startElement) & Node.DOCUMENT_POSITION_FOLLOWING) {
+				preceding = heading;
+			} else if (heading !== startElement) {
+				break;
+			}
+		}
+		return preceding?.textContent?.trim() || undefined;
+	}
+
+	private saveSelection(kind: 'highlight' | 'quote'): void {
+		const capture = this.selectionCapture ?? this.captureSelection();
+		if (!capture || !this.file || !this.book) {
+			new Notice(t('selectTextFirst'));
+			return;
+		}
+		const annotation: ReadingAnnotation = {
+			id: `books-${kind}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+			kind,
+			sourcePath: this.file.path,
+			bookId: this.book.id,
+			chapterTitle:
+				this.book.chapters[this.currentChapterIndex()]?.title ?? this.file.basename,
+			heading: capture.heading,
+			selectedText: capture.selectedText,
+			anchor: capture.anchor,
+			fraction: capture.fraction,
+			createdAt: new Date().toISOString(),
+		};
+
+		if (kind === 'highlight') {
+			this.booksPlugin.addHighlight(annotation);
+			this.wrapAnnotation(annotation);
+			new Notice(t('highlightAdded'));
+			return;
+		}
+
+		void this.booksPlugin
+			.addQuote(this.book, annotation)
+			.then(() => {
+				this.wrapAnnotation(annotation);
+				new Notice(t('quoteSaved'));
+			})
+			.catch((error: unknown) => {
+				console.error('Obsidian Books could not save a quote.', error);
+				new Notice(t('quoteError'));
+			});
+	}
+
+	private applyStoredHighlights(): void {
+		if (!this.file) return;
+		const annotations = this.booksPlugin
+			.getAnnotationsForSource(this.file.path)
+			.map((annotation) => ({
+				annotation,
+				location: locateTextAnchor(this.content.textContent ?? '', annotation.anchor),
+			}))
+			.filter((item) => item.location !== undefined)
+			.sort((left, right) => (right.location?.start ?? 0) - (left.location?.start ?? 0));
+		for (const { annotation } of annotations) this.wrapAnnotation(annotation);
+	}
+
+	private wrapAnnotation(annotation: ReadingAnnotation): void {
+		const location = locateTextAnchor(this.content.textContent ?? '', annotation.anchor);
+		if (!location) return;
+		const walker = this.contentEl.ownerDocument.createTreeWalker(this.content, 4);
+		const segments: Array<{ node: Text; start: number; end: number }> = [];
+		let offset = 0;
+		let current: Node | null;
+		while ((current = walker.nextNode())) {
+			if (!current.instanceOf(Text)) continue;
+			const length = current.data.length;
+			const segmentStart = Math.max(0, location.start - offset);
+			const segmentEnd = Math.min(length, location.end - offset);
+			if (segmentStart < segmentEnd) {
+				segments.push({ node: current, start: segmentStart, end: segmentEnd });
+			}
+			offset += length;
+			if (offset >= location.end) break;
+		}
+
+		for (const segment of segments.reverse()) {
+			let selected = segment.node;
+			if (segment.end < selected.data.length) selected.splitText(segment.end);
+			if (segment.start > 0) selected = selected.splitText(segment.start);
+			const mark = this.contentEl.ownerDocument.win.createEl('mark');
+			mark.className = `books-highlight books-highlight-${annotation.kind}`;
+			mark.dataset.annotationId = annotation.id;
+			mark.title = annotation.kind === 'quote' ? t('saveQuote') : t('highlightSelection');
+			selected.parentNode?.insertBefore(mark, selected);
+			mark.appendChild(selected);
+		}
 	}
 
 	private async changeChapter(direction: -1 | 1, initialFraction: number): Promise<void> {

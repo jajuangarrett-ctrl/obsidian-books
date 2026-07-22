@@ -8,11 +8,7 @@ export interface LocatedTextAnchor {
 	score: number;
 }
 
-export function createTextAnchor(
-	text: string,
-	startOffset: number,
-	endOffset: number,
-): TextAnchor {
+export function createTextAnchor(text: string, startOffset: number, endOffset: number): TextAnchor {
 	const start = Math.max(0, Math.min(Math.floor(startOffset), text.length));
 	const end = Math.max(start, Math.min(Math.floor(endOffset), text.length));
 	return {

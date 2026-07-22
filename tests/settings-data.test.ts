@@ -23,7 +23,7 @@ describe('settings migration', () => {
 			},
 		});
 
-		expect(migrated.schemaVersion).toBe(3);
+		expect(migrated.schemaVersion).toBe(4);
 		expect(migrated.settings).toMatchObject({
 			fontSize: 1.25,
 			lineHeight: 1.8,

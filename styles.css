@@ -200,6 +200,20 @@
 	color: var(--interactive-accent);
 }
 
+.books-highlight {
+	padding: 0.02em 0;
+	color: inherit;
+	background: color-mix(in srgb, #ffd54f 54%, transparent);
+	border-radius: 2px;
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+}
+
+.books-highlight-quote {
+	background: color-mix(in srgb, var(--interactive-accent) 24%, transparent);
+	box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--interactive-accent) 70%, transparent);
+}
+
 .books-content > :first-child {
 	margin-top: 0;
 }

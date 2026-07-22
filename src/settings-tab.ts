@@ -221,12 +221,10 @@ export class ReaderSettingTab extends PluginSettingTab {
 
 		if (this.booksPlugin.settings.quoteDestination === 'single-note') {
 			new Setting(containerEl).setName(t('quotesNotePath')).addText((text) =>
-				text
-					.setValue(this.booksPlugin.settings.quotesNotePath)
-					.onChange(async (value) => {
-						this.booksPlugin.settings.quotesNotePath = value;
-						await this.booksPlugin.saveAll();
-					}),
+				text.setValue(this.booksPlugin.settings.quotesNotePath).onChange(async (value) => {
+					this.booksPlugin.settings.quotesNotePath = value;
+					await this.booksPlugin.saveAll();
+				}),
 			);
 		}
 

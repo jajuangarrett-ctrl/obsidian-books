@@ -31,6 +31,9 @@ export function formatQuoteEntry(annotation: ReadingAnnotation, vaultName: strin
 }
 
 export function safeAnnotationFilename(title: string): string {
-	const cleaned = title.replace(/[\\/:*?"<>|#^[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+	const cleaned = title
+		.replace(/[\\/:*?"<>|#^[\]]/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim();
 	return cleaned || 'Untitled Book';
 }
