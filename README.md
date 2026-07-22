@@ -1,70 +1,98 @@
-# MD Reader
+# Obsidian Books
 
-Read your Obsidian notes like an e-book.
+Obsidian Books turns rendered Markdown notes into a focused, paginated reading
+experience on Obsidian desktop and mobile. It is based on
+[MD Reader](https://github.com/mrrepac/obsidian-md-reader) and preserves its CSS
+columns plus `translateX` pagination model instead of replacing the proven
+foundation.
 
-MD Reader renders a note into fixed-size **pages** and lets you flip through them **sideways** — by swiping, tapping the screen edges, or using the arrow keys — instead of scrolling vertically. Choose a single page or a two-page book spread. Works on **desktop and mobile**.
+> [!NOTE]
+> Obsidian Books is an early development preview. Single-note reading is working;
+> folder books, the bookshelf, table of contents, bookmarks, annotations, and
+> quote capture are under active development.
 
-There was no plugin that paginates your _own_ Markdown notes into flippable pages (the existing "reader" plugins all open EPUB/PDF files), so this one fills that gap.
+## Current features
 
-## Features
+- Render Markdown with Obsidian's supported `MarkdownRenderer` API.
+- Read in responsive one-page or two-page spreads.
+- Navigate with swipe, tap zones, arrow keys, Page Up/Down, Space, Home/End,
+  mouse wheel, or labelled on-screen buttons.
+- Choose None, Horizontal Slide, or 3D Page Turn transitions. The 3D option is a
+  perspective animation over MD Reader's column layout, not a paper curl.
+- Preserve reading position as a percentage when fonts, themes, or window size
+  cause the note to reflow.
+- Adjust font size, line height, maximum page width, and page gap.
+- Use immersive reading while retaining an Escape-key exit.
+- Respect theme colors, visible keyboard focus, reduced-motion preferences, and
+  increased-contrast preferences.
+- Keep links, checkboxes, media controls, selected text, scrollable embeds, and
+  operating-system edge gestures out of page-turn handling.
+- Load legacy MD Reader settings and positions when its `data.json` is carried
+  into the Obsidian Books plugin folder.
 
-- **Horizontal page flip.** Swipe (mobile), tap the left/right third of the screen, use `←` / `→`, `Space` / `Shift+Space`, `PageUp` / `PageDown`, `Home` / `End`, the mouse wheel, or the on-screen `‹` `›` buttons.
-- **Single page or two-page spread.** Two pages on wide screens, one on narrow windows and phones — or force a mode.
-- **Remembers your place** in every note. The position is stored as a fraction, so it survives font-size, width and theme changes.
-- **Immersive reading.** Hides the app header and the mobile/desktop bars so only the text remains. Tap the center of the page to bring them back.
-- **Collapses the side panels** when you open a note, and restores them when you close the reader.
-- **Theme-aware.** Uses your theme's fonts and colors.
-- **Configurable.** Page mode, max page width, font size, line height, page gap, flip animation, tap zones, where to open, and more.
-- **No vertical scrolling, no manual page breaks** — pagination is computed from the rendered Markdown automatically and re-flows on resize.
+## Open a note
 
-## How to use
+With a Markdown note active, use any of these:
 
-Open a note in the reader in any of these ways:
+- Select the book icon in the ribbon.
+- Run **Open current note in Obsidian Books** from the command palette.
+- Right-click a Markdown file and choose **Open in Obsidian Books**.
 
-- Click the **book icon** in the left ribbon.
-- Run the command **"Open current note in MD Reader"** from the command palette.
-- **Right-click** a note → **Open in MD Reader**.
+## Manual installation
 
-Then:
+Obsidian Books is not yet in the Community Plugins catalog. To install a local
+development build:
 
-- **Turn pages:** swipe, tap the left/right edge, arrow keys, `Space`, mouse wheel, or the `‹` `›` buttons.
-- **Toggle the interface:** tap the center of the page.
-- The bottom bar shows your progress (`page X / N`).
+1. Run `npm ci && npm run build`.
+2. Create `<vault>/.obsidian/plugins/obsidian-books/` in a dedicated test vault.
+3. Copy `main.js`, `manifest.json`, and `styles.css` into that folder.
+4. Restart Obsidian, then enable **Obsidian Books** under Community plugins.
 
-## Settings
-
-| Setting                             | What it does                                                                                |
-| ----------------------------------- | ------------------------------------------------------------------------------------------- |
-| Page mode                           | Auto (two pages on a wide screen, one on a narrow one), Always one, or Always two.          |
-| Max page width                      | Width of a single page; smaller is a narrower, more comfortable column.                     |
-| Font size                           | Multiplier relative to your theme's reading font.                                           |
-| Line height                         | Line spacing.                                                                               |
-| Page gap                            | Space between pages.                                                                        |
-| Flip animation                      | Animate page turns on/off.                                                                  |
-| Tap zones                           | Tap left/right to flip, center to toggle the interface.                                     |
-| Remember position                   | Reopen each note where you left off.                                                        |
-| Show note title                     | Show the note title on the first page.                                                      |
-| Open in                             | New tab, current tab, split, or new window.                                                 |
-| Collapse side panels                | Hide the side panels while reading.                                                         |
-| Immersive                           | Hide the app chrome for full-screen reading.                                                |
-| Hide the system status bar (mobile) | On a phone, also hide the OS status bar (clock, notifications) while reading. Experimental. |
-
-## Installation
-
-### From the Community Plugins catalog
-
-Settings → Community plugins → Browse → search **"MD Reader"** → Install → Enable.
-
-### Manual
-
-Copy `main.js`, `manifest.json` and `styles.css` into
-`<your vault>/.obsidian/plugins/md-reader/` and enable the plugin in
-Settings → Community plugins.
+Do not develop or initially test the plugin in an important vault. Obsidian's
+developer documentation recommends a dedicated test vault.
 
 ## Development
 
-The plugin is plain JavaScript with **no build step** — `main.js` is the source and ships as-is. To work on it, edit the files in the plugin folder and reload Obsidian (`Ctrl/Cmd-P` → "Reload app without saving").
+Requirements: Node.js 22 or later and npm.
+
+```bash
+npm ci
+npm run dev
+```
+
+Quality commands:
+
+```bash
+npm run format:check
+npm run lint
+npm test
+npm run build
+npm run validate
+```
+
+The source uses the official Obsidian sample-plugin TypeScript/esbuild structure.
+The production bundle is `main.js`; Obsidian also requires `manifest.json` and
+`styles.css`.
+
+## Project documentation
+
+- [Architecture and upstream audit](docs/ARCHITECTURE.md)
+- [Phased implementation plan](docs/IMPLEMENTATION_PLAN.md)
+- [Test checklist and results](docs/TEST_CHECKLIST.md)
+- [Changes](CHANGELOG.md)
+- [MD Reader attribution](NOTICE.md)
+
+## Known limitations
+
+- The bookshelf, folder-based books, chapter metadata, table of contents,
+  bookmarks, highlights, quotes, and annotation destinations are not implemented
+  yet.
+- Very tall or unusually interactive rendered blocks still need the planned
+  vertical-flow fallback and full compatibility testing.
+- Mobile and iPad behavior has not yet been validated on a physical iPad.
+- Screenshots will be added after the reader design stabilizes.
 
 ## License
 
-[MIT](LICENSE) © mrrepac
+[MIT](LICENSE). The original MD Reader copyright and license are preserved; see
+[NOTICE.md](NOTICE.md) for attribution.
