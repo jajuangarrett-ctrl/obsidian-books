@@ -95,6 +95,7 @@ const STRINGS = {
 			`Chapter ${chapter} of ${chapters} · Page ${page} of ${pages}`,
 		minutesLeft: (minutes: number) => `${minutes} min left in chapter`,
 		bookmarkLocation: (chapter: string, percent: number) => `${chapter}, ${percent}%`,
+		scrollStatus: (percent: number) => `Scrollable chapter · ${percent}%`,
 	},
 	ru: {
 		fallbackTitle: 'Obsidian Books',
@@ -190,6 +191,7 @@ const STRINGS = {
 			`Глава ${chapter} из ${chapters} · Страница ${page} из ${pages}`,
 		minutesLeft: (minutes: number) => `Осталось ${minutes} мин. в главе`,
 		bookmarkLocation: (chapter: string, percent: number) => `${chapter}, ${percent}%`,
+		scrollStatus: (percent: number) => `Прокручиваемая глава · ${percent}%`,
 	},
 } as const;
 
@@ -241,4 +243,8 @@ export function minutesLeft(minutes: number): string {
 
 export function bookmarkLocation(chapter: string, percent: number): string {
 	return STRINGS[language()].bookmarkLocation(chapter, percent);
+}
+
+export function scrollStatus(percent: number): string {
+	return STRINGS[language()].scrollStatus(percent);
 }

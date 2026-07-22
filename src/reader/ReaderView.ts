@@ -15,7 +15,7 @@ import type ObsidianBooksPlugin from '../main';
 import { createTextAnchor, locateTextAnchor } from '../annotations/anchors';
 import { BookContentsModal } from '../books/BookContentsModal';
 import type { BookRecord } from '../books/domain';
-import { chapterStatus, minutesLeft, pageStatus, t } from '../i18n';
+import { chapterStatus, minutesLeft, pageStatus, scrollStatus, t } from '../i18n';
 import type { ReadingAnnotation, TextAnchor } from '../types';
 import {
 	calculateGeometry,
@@ -25,6 +25,7 @@ import {
 	fractionToPage,
 	pageToFraction,
 } from './pagination';
+import { verticalFallbackReason, type FallbackBlockMeasurement } from './fallback';
 
 export const VIEW_TYPE_READER = 'obsidian-books-reader';
 
@@ -75,6 +76,7 @@ export class ReaderView extends ItemView {
 	private renderGeneration = 0;
 	private lastTouchAt = 0;
 	private chapterMinutes = 1;
+	private verticalMode = false;
 
 	private viewport!: HTMLElement;
 	private chapterBar!: HTMLElement;
@@ -316,6 +318,7 @@ export class ReaderView extends ItemView {
 		this.renderChild = new Component();
 		this.addChild(this.renderChild);
 		this.content.empty();
+		this.setVerticalMode(false);
 		this.content.setCssProps({ transform: 'none' });
 		this.page = 0;
 		this.alignmentOffset = 0;
@@ -437,6 +440,11 @@ export class ReaderView extends ItemView {
 		if (!this.content || !this.viewport) return;
 		const viewportWidth = this.viewport.clientWidth;
 		if (!viewportWidth) return;
+		if (this.detectVerticalFallback()) {
+			this.measureVertical(viewportWidth);
+			return;
+		}
+		this.setVerticalMode(false);
 
 		const computedGap =
 			Number.parseFloat(this.content.win.getComputedStyle(this.content).columnGap) || 0;
@@ -486,6 +494,10 @@ export class ReaderView extends ItemView {
 	}
 
 	private applyTransform(): void {
+		if (this.verticalMode) {
+			this.content.style.transform = 'none';
+			return;
+		}
 		const translateX = calculateTranslation(this.alignmentOffset, this.page, this.pageStride);
 		this.content.style.transform = `translateX(${translateX}px)`;
 	}
