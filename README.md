@@ -22,6 +22,9 @@ foundation.
 - Preserve reading position as a percentage when fonts, themes, or window size
   cause the note to reflow.
 - Adjust font size, line height, maximum page width, and page gap.
+- Choose the Obsidian theme, white, cream, sepia, or dark reading surface; switch
+  between the theme font, a book serif, and a clean sans serif; and adjust
+  paragraph spacing and outer page margins.
 - Use immersive reading while retaining an Escape-key exit.
 - Respect theme colors, visible keyboard focus, reduced-motion preferences, and
   increased-contrast preferences.
@@ -35,6 +38,8 @@ foundation.
   chapter order, and numeric-aware fallback ordering.
 - Render only the active chapter, continue across chapter boundaries, open a
   table of contents, and resume saved book/chapter progress.
+- Show estimated minutes left in the active chapter and save persistent
+  chapter-aware bookmarks from the reader toolbar.
 
 ## Folder books
 
@@ -111,8 +116,7 @@ The production bundle is `main.js`; Obsidian also requires `manifest.json` and
 
 ## Known limitations
 
-- Bookmarks, reading-time estimates, highlights, quotes, and annotation
-  destinations are not implemented yet.
+- Highlights, quotes, and annotation destinations are not implemented yet.
 - Very tall or unusually interactive rendered blocks still need the planned
   vertical-flow fallback and full compatibility testing.
 - Mobile and iPad behavior has not yet been validated on a physical iPad.

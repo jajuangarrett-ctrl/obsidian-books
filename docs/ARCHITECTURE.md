@@ -91,6 +91,11 @@ MD Reader's legacy top-level settings and `positions` map will be accepted and
 migrated. Saved locations remain normalized to `0..1`; later stable text anchors
 can refine the position without making page numbers persistent.
 
+The current schema is version 3. Bookmarks keep a source path, optional book
+identity, normalized in-chapter fraction, creation timestamp, and stable ID. File
+and folder rename/delete handlers update or remove these paths together with
+saved positions and book progress.
+
 ## Accessibility contract
 
 The reader is a labelled landmark containing rendered semantic Markdown. All

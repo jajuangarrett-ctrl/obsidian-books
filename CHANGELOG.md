@@ -21,6 +21,10 @@ All notable changes to Obsidian Books will be documented in this file.
   chapter order, and numeric-aware fallback ordering.
 - Table of contents, chapter controls, cross-chapter page continuation, and saved
   book/chapter progress while loading only the active chapter.
+- Theme, white, cream, sepia, and dark reading surfaces; theme, serif, and sans
+  font choices; adjustable paragraph spacing and page margins.
+- Chapter reading-time estimates and persistent bookmarks that reopen a saved
+  source chapter and normalized location.
 
 ### Changed
 
