@@ -2,7 +2,13 @@ import { App, PluginSettingTab, Setting } from 'obsidian';
 
 import type ObsidianBooksPlugin from './main';
 import { t } from './i18n';
-import type { OpenMode, PageMode, TransitionMode } from './types';
+import type {
+	AppearancePreset,
+	FontFamily,
+	OpenMode,
+	PageMode,
+	TransitionMode,
+} from './types';
 
 export class ReaderSettingTab extends PluginSettingTab {
 	public constructor(
@@ -21,6 +27,22 @@ export class ReaderSettingTab extends PluginSettingTab {
 			await this.booksPlugin.saveAll();
 			this.booksPlugin.refreshOpenViews();
 		};
+
+		new Setting(containerEl).setName(t('appearance')).addDropdown((dropdown) =>
+			dropdown
+				.addOptions({
+					theme: t('themeSurface'),
+					white: t('whiteSurface'),
+					cream: t('creamSurface'),
+					sepia: t('sepiaSurface'),
+					dark: t('darkSurface'),
+				})
+				.setValue(this.booksPlugin.settings.appearance)
+				.onChange(async (value) => {
+					this.booksPlugin.settings.appearance = value as AppearancePreset;
+					await save();
+				}),
+		);
 
 		new Setting(containerEl)
 			.setName(t('pageMode'))
@@ -48,6 +70,16 @@ export class ReaderSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		new Setting(containerEl).setName(t('pageMargin')).addSlider((slider) =>
+			slider
+				.setLimits(8, 80, 4)
+				.setValue(this.booksPlugin.settings.pageMargin)
+				.onChange(async (value) => {
+					this.booksPlugin.settings.pageMargin = value;
+					await save();
+				}),
+		);
+
 		new Setting(containerEl)
 			.setName(t('fontSize'))
 			.setDesc(t('fontSizeDescription'))
@@ -61,12 +93,36 @@ export class ReaderSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		new Setting(containerEl).setName(t('fontFamily')).addDropdown((dropdown) =>
+			dropdown
+				.addOptions({
+					theme: t('themeFont'),
+					serif: t('serifFont'),
+					sans: t('sansFont'),
+				})
+				.setValue(this.booksPlugin.settings.fontFamily)
+				.onChange(async (value) => {
+					this.booksPlugin.settings.fontFamily = value as FontFamily;
+					await save();
+				}),
+		);
+
 		new Setting(containerEl).setName(t('lineHeight')).addSlider((slider) =>
 			slider
 				.setLimits(1.2, 2.4, 0.05)
 				.setValue(this.booksPlugin.settings.lineHeight)
 				.onChange(async (value) => {
 					this.booksPlugin.settings.lineHeight = value;
+					await save();
+				}),
+		);
+
+		new Setting(containerEl).setName(t('paragraphSpacing')).addSlider((slider) =>
+			slider
+				.setLimits(0, 2, 0.1)
+				.setValue(this.booksPlugin.settings.paragraphSpacing)
+				.onChange(async (value) => {
+					this.booksPlugin.settings.paragraphSpacing = value;
 					await save();
 				}),
 		);

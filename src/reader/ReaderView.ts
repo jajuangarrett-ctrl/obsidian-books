@@ -2,6 +2,7 @@ import {
 	Component,
 	ItemView,
 	MarkdownRenderer,
+	Notice,
 	Platform,
 	Scope,
 	TFile,
@@ -13,7 +14,7 @@ import {
 import type ObsidianBooksPlugin from '../main';
 import { BookContentsModal } from '../books/BookContentsModal';
 import type { BookRecord } from '../books/domain';
-import { chapterStatus, pageStatus, t } from '../i18n';
+import { chapterStatus, minutesLeft, pageStatus, t } from '../i18n';
 import {
 	calculateGeometry,
 	calculateTranslation,
@@ -63,10 +64,12 @@ export class ReaderView extends ItemView {
 	private requestedFraction: number | null = null;
 	private renderGeneration = 0;
 	private lastTouchAt = 0;
+	private chapterMinutes = 1;
 
 	private viewport!: HTMLElement;
 	private chapterBar!: HTMLElement;
 	private contentsButton!: HTMLButtonElement;
+	private bookmarkButton!: HTMLButtonElement;
 	private bookTitleText!: HTMLElement;
 	private chapterTitleText!: HTMLElement;
 	private previousChapterButton!: HTMLButtonElement;
@@ -139,15 +142,23 @@ export class ReaderView extends ItemView {
 		this.viewport.setAttribute('aria-label', t('aria'));
 
 		this.chapterBar = this.viewport.createDiv({ cls: 'books-chapterbar books-ui' });
-		this.contentsButton = this.chapterBar.createEl('button', {
+		const chapterLeading = this.chapterBar.createDiv({ cls: 'books-chapter-actions' });
+		this.contentsButton = chapterLeading.createEl('button', {
 			cls: 'books-chapter-button books-contents-button',
 			text: '☰',
 			attr: { type: 'button', 'aria-label': t('contents') },
 		});
+		this.bookmarkButton = chapterLeading.createEl('button', {
+			cls: 'books-chapter-button books-bookmark-button',
+			text: '☆',
+			attr: { type: 'button', 'aria-label': t('addBookmark') },
+		});
 		const chapterLabels = this.chapterBar.createDiv({ cls: 'books-chapter-labels' });
 		this.bookTitleText = chapterLabels.createDiv({ cls: 'books-book-title' });
 		this.chapterTitleText = chapterLabels.createDiv({ cls: 'books-chapter-title' });
-		const chapterActions = this.chapterBar.createDiv({ cls: 'books-chapter-actions' });
+		const chapterActions = this.chapterBar.createDiv({
+			cls: 'books-chapter-actions books-chapter-navigation',
+		});
 		this.previousChapterButton = chapterActions.createEl('button', {
 			cls: 'books-chapter-button',
 			text: '‹',
@@ -197,6 +208,10 @@ export class ReaderView extends ItemView {
 		this.registerDomEvent(this.contentsButton, 'click', (event) => {
 			event.stopPropagation();
 			this.openContents();
+		});
+		this.registerDomEvent(this.bookmarkButton, 'click', (event) => {
+			event.stopPropagation();
+			this.toggleBookmark();
 		});
 		this.registerDomEvent(this.previousChapterButton, 'click', (event) => {
 			event.stopPropagation();
@@ -258,6 +273,7 @@ export class ReaderView extends ItemView {
 			? raw.slice(frontmatterPosition.end.offset)
 			: raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
 		markdown = markdown.replace(/^\s+/, '');
+		this.chapterMinutes = Math.max(1, Math.ceil(this.countWords(markdown) / 225));
 
 		this.disposeRenderedMarkdown();
 		this.renderChild = new Component();
@@ -313,7 +329,18 @@ export class ReaderView extends ItemView {
 		const settings = this.booksPlugin.settings;
 		this.content.style.setProperty('--books-font-size', `${settings.fontSize}em`);
 		this.content.style.setProperty('--books-line-height', String(settings.lineHeight));
+		this.content.style.setProperty('--books-paragraph-spacing', `${settings.paragraphSpacing}em`);
 		this.content.style.setProperty('--books-column-gap', `${settings.columnGap}em`);
+		this.content.removeClass('books-font-theme', 'books-font-serif', 'books-font-sans');
+		this.content.addClass(`books-font-${settings.fontFamily}`);
+		this.viewport.removeClass(
+			'books-surface-theme',
+			'books-surface-white',
+			'books-surface-cream',
+			'books-surface-sepia',
+			'books-surface-dark',
+		);
+		this.viewport.addClass(`books-surface-${settings.appearance}`);
 		this.content.removeClass('books-dragging');
 		this.content.style.transition =
 			settings.transition === 'slide' ? 'transform 220ms ease' : 'none';
@@ -375,7 +402,7 @@ export class ReaderView extends ItemView {
 		const geometry = calculateGeometry({
 			viewportWidth,
 			columnGap: computedGap,
-			outerMargin: 24,
+			outerMargin: this.booksPlugin.settings.pageMargin,
 			pageMode: this.booksPlugin.settings.pageMode,
 			isDesktop: Platform.isDesktop,
 			maxPageWidth: this.booksPlugin.settings.maxPageWidth,
@@ -471,7 +498,12 @@ export class ReaderView extends ItemView {
 						this.totalPages,
 					)
 				: pageStatus(current, this.totalPages);
-		this.statusText.setText(label);
+		const remainingPages = Math.max(1, this.totalPages - this.page);
+		const remainingMinutes = Math.max(
+			1,
+			Math.ceil((this.chapterMinutes * remainingPages) / this.totalPages),
+		);
+		this.statusText.setText(`${label} · ${minutesLeft(remainingMinutes)}`);
 		const percentage = this.totalPages > 0 ? (current / this.totalPages) * 100 : 0;
 		this.progressFill.style.width = `${percentage}%`;
 		const progress = this.progressFill.parentElement;
@@ -480,6 +512,7 @@ export class ReaderView extends ItemView {
 		progress?.setAttribute('aria-valuetext', label);
 		this.previousButton.disabled = this.page <= 0 && !this.hasPreviousChapter();
 		this.nextButton.disabled = this.page >= this.totalPages - 1 && !this.hasNextChapter();
+		this.updateBookmarkButton();
 	}
 
 	private savePosition(): void {
@@ -516,11 +549,61 @@ export class ReaderView extends ItemView {
 			!this.book || index < 0 || index >= this.book.chapters.length - 1;
 	}
 
+	private currentFraction(): number {
+		return pageToFraction(this.page, this.totalPages);
+	}
+
+	private updateBookmarkButton(): void {
+		if (!this.bookmarkButton || !this.file) return;
+		const bookmarked = Boolean(
+			this.booksPlugin.findBookmark(this.file.path, this.currentFraction()),
+		);
+		this.bookmarkButton.setText(bookmarked ? '★' : '☆');
+		this.bookmarkButton.toggleClass('is-active', bookmarked);
+		this.bookmarkButton.setAttribute(
+			'aria-label',
+			bookmarked ? t('removeBookmark') : t('addBookmark'),
+		);
+		this.bookmarkButton.setAttribute('aria-pressed', String(bookmarked));
+	}
+
+	private toggleBookmark(): void {
+		if (!this.book || !this.file || !this.measured) return;
+		const added = this.booksPlugin.toggleBookmark(
+			this.book,
+			this.file.path,
+			this.currentFraction(),
+		);
+		this.updateBookmarkButton();
+		new Notice(added ? t('bookmarkAdded') : t('bookmarkRemoved'));
+	}
+
 	private openContents(): void {
 		if (!this.book || !this.file) return;
-		new BookContentsModal(this.app, this.book, this.file.path, (chapterPath) => {
-			void this.openChapter(chapterPath, 0);
-		}).open();
+		new BookContentsModal(
+			this.app,
+			this.book,
+			this.file.path,
+			this.booksPlugin.getBookmarksForBook(this.book),
+			(chapterPath, fraction) => {
+				void this.openChapter(chapterPath, fraction);
+			},
+			(id) => {
+				this.booksPlugin.removeBookmark(id);
+				this.updateBookmarkButton();
+			},
+		).open();
+	}
+
+	private countWords(markdown: string): number {
+		return markdown
+			.replace(/```[\s\S]*?```/g, ' ')
+			.replace(/`[^`]*`/g, ' ')
+			.replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+			.replace(/[#[\]>*_~|{}-]/g, ' ')
+			.trim()
+			.split(/\s+/u)
+			.filter(Boolean).length;
 	}
 
 	private async changeChapter(direction: -1 | 1, initialFraction: number): Promise<void> {
