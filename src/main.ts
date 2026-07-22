@@ -7,12 +7,7 @@ import { BookshelfView, VIEW_TYPE_BOOKSHELF } from './bookshelf/BookshelfView';
 import { ReaderView, VIEW_TYPE_READER } from './reader/ReaderView';
 import { migratePersistedData } from './settings-data';
 import { ReaderSettingTab } from './settings-tab';
-import type {
-	BookProgressMap,
-	PersistedData,
-	PositionMap,
-	ReaderSettings,
-} from './types';
+import type { BookProgressMap, PersistedData, PositionMap, ReaderSettings } from './types';
 
 export default class ObsidianBooksPlugin extends Plugin {
 	public settings!: ReaderSettings;
@@ -131,9 +126,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 	public async openReader(file: TFile): Promise<void> {
 		const book = this.resolveBookForFile(file);
 		const targetPath =
-			book.manifestPath === file.path
-				? this.preferredChapterPath(book)
-				: file.path;
+			book.manifestPath === file.path ? this.preferredChapterPath(book) : file.path;
 		const target = this.app.vault.getAbstractFileByPath(targetPath);
 		if (!(target instanceof TFile)) {
 			new Notice(t('notFound'));

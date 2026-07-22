@@ -32,7 +32,6 @@ export class BookLibrary {
 
 	public discover(recentPaths: readonly string[] = []): BookRecord[] {
 		const markdownFiles = this.app.vault.getMarkdownFiles();
-		const byPath = new Map(markdownFiles.map((file) => [file.path, file]));
 		const manifests = markdownFiles.filter((file) => file.name === BOOK_MANIFEST);
 		const roots = manifests.map((file) => parentPath(file.path));
 		const folderBooks = manifests.map((manifest) =>
@@ -157,10 +156,7 @@ export class BookLibrary {
 	}
 
 	private frontmatter(file: TFile): Record<string, unknown> {
-		return (this.app.metadataCache.getFileCache(file)?.frontmatter ?? {}) as Record<
-			string,
-			unknown
-		>;
+		return this.app.metadataCache.getFileCache(file)?.frontmatter ?? {};
 	}
 
 	private resolveMarkdownReference(reference: string, sourcePath: string): string | undefined {

@@ -11,7 +11,9 @@ import {
 } from 'obsidian';
 
 import type ObsidianBooksPlugin from '../main';
-import { pageStatus, t } from '../i18n';
+import { BookContentsModal } from '../books/BookContentsModal';
+import type { BookRecord } from '../books/domain';
+import { chapterStatus, pageStatus, t } from '../i18n';
 import {
 	calculateGeometry,
 	calculateTranslation,
@@ -25,6 +27,8 @@ export const VIEW_TYPE_READER = 'obsidian-books-reader';
 
 interface ReaderViewState {
 	filePath?: string;
+	bookId?: string;
+	initialFraction?: number;
 }
 
 const INTERACTIVE_SELECTOR = [
@@ -47,6 +51,8 @@ export class ReaderView extends ItemView {
 	public file: TFile | null = null;
 	public filePath: string | null = null;
 
+	private book: BookRecord | null = null;
+	private bookId: string | null = null;
 	private page = 0;
 	private totalPages = 1;
 	private pageStride = 0;
@@ -54,10 +60,17 @@ export class ReaderView extends ItemView {
 	private alignmentOffset = 0;
 	private measured = false;
 	private pendingFraction: number | null = null;
+	private requestedFraction: number | null = null;
 	private renderGeneration = 0;
 	private lastTouchAt = 0;
 
 	private viewport!: HTMLElement;
+	private chapterBar!: HTMLElement;
+	private contentsButton!: HTMLButtonElement;
+	private bookTitleText!: HTMLElement;
+	private chapterTitleText!: HTMLElement;
+	private previousChapterButton!: HTMLButtonElement;
+	private nextChapterButton!: HTMLButtonElement;
 	private stage!: HTMLElement;
 	private content!: HTMLElement;
 	private previousButton!: HTMLButtonElement;
@@ -86,7 +99,7 @@ export class ReaderView extends ItemView {
 	}
 
 	public getDisplayText(): string {
-		return this.file?.basename ?? t('fallbackTitle');
+		return this.book?.title ?? this.file?.basename ?? t('fallbackTitle');
 	}
 
 	public getIcon(): string {
@@ -94,14 +107,21 @@ export class ReaderView extends ItemView {
 	}
 
 	public getState(): Record<string, unknown> {
-		return { filePath: this.filePath };
+		return { filePath: this.filePath, bookId: this.bookId };
 	}
 
 	public async setState(state: unknown, result: ViewStateResult): Promise<void> {
 		const readerState = this.parseState(state);
-		if (readerState.filePath && readerState.filePath !== this.filePath) {
+		if (
+			readerState.filePath &&
+			(readerState.filePath !== this.filePath ||
+				readerState.bookId !== this.bookId ||
+				readerState.initialFraction !== undefined)
+		) {
 			this.savePosition();
 			this.filePath = readerState.filePath;
+			this.bookId = readerState.bookId ?? null;
+			this.requestedFraction = readerState.initialFraction ?? null;
 			const abstractFile = this.app.vault.getAbstractFileByPath(readerState.filePath);
 			this.file = abstractFile instanceof TFile ? abstractFile : null;
 			await this.renderFile();
@@ -117,6 +137,27 @@ export class ReaderView extends ItemView {
 		this.viewport.setAttribute('role', 'region');
 		this.viewport.setAttribute('aria-roledescription', 'paginated book reader');
 		this.viewport.setAttribute('aria-label', t('aria'));
+
+		this.chapterBar = this.viewport.createDiv({ cls: 'books-chapterbar books-ui' });
+		this.contentsButton = this.chapterBar.createEl('button', {
+			cls: 'books-chapter-button books-contents-button',
+			text: '☰',
+			attr: { type: 'button', 'aria-label': t('contents') },
+		});
+		const chapterLabels = this.chapterBar.createDiv({ cls: 'books-chapter-labels' });
+		this.bookTitleText = chapterLabels.createDiv({ cls: 'books-book-title' });
+		this.chapterTitleText = chapterLabels.createDiv({ cls: 'books-chapter-title' });
+		const chapterActions = this.chapterBar.createDiv({ cls: 'books-chapter-actions' });
+		this.previousChapterButton = chapterActions.createEl('button', {
+			cls: 'books-chapter-button',
+			text: '‹',
+			attr: { type: 'button', 'aria-label': t('previousChapter') },
+		});
+		this.nextChapterButton = chapterActions.createEl('button', {
+			cls: 'books-chapter-button',
+			text: '›',
+			attr: { type: 'button', 'aria-label': t('nextChapter') },
+		});
 
 		this.stage = this.viewport.createDiv({ cls: 'books-stage' });
 		this.stage.setAttribute('role', 'main');
@@ -152,6 +193,18 @@ export class ReaderView extends ItemView {
 		this.registerDomEvent(this.nextButton, 'click', (event) => {
 			event.stopPropagation();
 			this.next();
+		});
+		this.registerDomEvent(this.contentsButton, 'click', (event) => {
+			event.stopPropagation();
+			this.openContents();
+		});
+		this.registerDomEvent(this.previousChapterButton, 'click', (event) => {
+			event.stopPropagation();
+			void this.changeChapter(-1, 1);
+		});
+		this.registerDomEvent(this.nextChapterButton, 'click', (event) => {
+			event.stopPropagation();
+			void this.changeChapter(1, 0);
 		});
 
 		this.buildScope();
@@ -193,6 +246,9 @@ export class ReaderView extends ItemView {
 
 		const generation = ++this.renderGeneration;
 		const sourceFile = this.file;
+		this.book = this.booksPlugin.resolveBookForFile(sourceFile, this.bookId ?? undefined);
+		this.bookId = this.book.id;
+		this.updateChapterBar();
 		const raw = await this.app.vault.cachedRead(sourceFile);
 		if (generation !== this.renderGeneration) return;
 
@@ -239,7 +295,8 @@ export class ReaderView extends ItemView {
 		const savedPosition = this.booksPlugin.settings.rememberPosition
 			? this.booksPlugin.positions[sourceFile.path]
 			: undefined;
-		this.pendingFraction = savedPosition?.fraction ?? null;
+		this.pendingFraction = this.requestedFraction ?? savedPosition?.fraction ?? null;
+		this.requestedFraction = null;
 		this.watchMediaLoading();
 
 		this.animationFrame = this.contentEl.win.requestAnimationFrame(() => {
@@ -269,8 +326,20 @@ export class ReaderView extends ItemView {
 
 	private parseState(state: unknown): ReaderViewState {
 		if (typeof state !== 'object' || state === null || !('filePath' in state)) return {};
-		const filePath = (state as { filePath?: unknown }).filePath;
-		return typeof filePath === 'string' ? { filePath } : {};
+		const candidate = state as {
+			filePath?: unknown;
+			bookId?: unknown;
+			initialFraction?: unknown;
+		};
+		if (typeof candidate.filePath !== 'string') return {};
+		return {
+			filePath: candidate.filePath,
+			bookId: typeof candidate.bookId === 'string' ? candidate.bookId : undefined,
+			initialFraction:
+				typeof candidate.initialFraction === 'number'
+					? Math.max(0, Math.min(candidate.initialFraction, 1))
+					: undefined,
+		};
 	}
 
 	private disposeRenderedMarkdown(): void {
@@ -369,11 +438,13 @@ export class ReaderView extends ItemView {
 	}
 
 	private next(): void {
-		this.goTo(this.page + 1);
+		if (this.page < this.totalPages - 1) this.goTo(this.page + 1);
+		else void this.changeChapter(1, 0);
 	}
 
 	private previous(): void {
-		this.goTo(this.page - 1);
+		if (this.page > 0) this.goTo(this.page - 1);
+		else void this.changeChapter(-1, 1);
 	}
 
 	private animatePageTurn(direction: 'forward' | 'backward'): void {
@@ -390,7 +461,16 @@ export class ReaderView extends ItemView {
 
 	private updateStatus(): void {
 		const current = this.page + 1;
-		const label = pageStatus(current, this.totalPages);
+		const chapterIndex = this.currentChapterIndex();
+		const label =
+			this.book && this.book.chapters.length > 1 && chapterIndex >= 0
+				? chapterStatus(
+						chapterIndex + 1,
+						this.book.chapters.length,
+						current,
+						this.totalPages,
+					)
+				: pageStatus(current, this.totalPages);
 		this.statusText.setText(label);
 		const percentage = this.totalPages > 0 ? (current / this.totalPages) * 100 : 0;
 		this.progressFill.style.width = `${percentage}%`;
@@ -398,16 +478,71 @@ export class ReaderView extends ItemView {
 		progress?.setAttribute('aria-valuemax', String(this.totalPages));
 		progress?.setAttribute('aria-valuenow', String(current));
 		progress?.setAttribute('aria-valuetext', label);
-		this.previousButton.disabled = this.page <= 0;
-		this.nextButton.disabled = this.page >= this.totalPages - 1;
+		this.previousButton.disabled = this.page <= 0 && !this.hasPreviousChapter();
+		this.nextButton.disabled = this.page >= this.totalPages - 1 && !this.hasNextChapter();
 	}
 
 	private savePosition(): void {
 		if (!this.booksPlugin.settings.rememberPosition || !this.file || !this.measured) return;
 		if (this.pendingFraction !== null) return;
-		this.booksPlugin.positions[this.file.path] = {
-			fraction: pageToFraction(this.page, this.totalPages),
-		};
+		const fraction = pageToFraction(this.page, this.totalPages);
+		this.booksPlugin.positions[this.file.path] = { fraction };
+		if (this.book) this.booksPlugin.updateBookProgress(this.book, this.file.path, fraction);
+	}
+
+	private currentChapterIndex(): number {
+		if (!this.book || !this.file) return -1;
+		return this.book.chapters.findIndex((chapter) => chapter.path === this.file?.path);
+	}
+
+	private hasPreviousChapter(): boolean {
+		return this.currentChapterIndex() > 0;
+	}
+
+	private hasNextChapter(): boolean {
+		const index = this.currentChapterIndex();
+		return Boolean(this.book && index >= 0 && index < this.book.chapters.length - 1);
+	}
+
+	private updateChapterBar(): void {
+		if (!this.chapterBar) return;
+		const index = this.currentChapterIndex();
+		const chapter = index >= 0 ? this.book?.chapters[index] : undefined;
+		this.bookTitleText.setText(this.book?.title ?? this.file?.basename ?? t('fallbackTitle'));
+		this.chapterTitleText.setText(chapter?.title ?? '');
+		this.chapterBar.toggleClass('is-single-note', (this.book?.chapters.length ?? 0) <= 1);
+		this.previousChapterButton.disabled = index <= 0;
+		this.nextChapterButton.disabled =
+			!this.book || index < 0 || index >= this.book.chapters.length - 1;
+	}
+
+	private openContents(): void {
+		if (!this.book || !this.file) return;
+		new BookContentsModal(this.app, this.book, this.file.path, (chapterPath) => {
+			void this.openChapter(chapterPath, 0);
+		}).open();
+	}
+
+	private async changeChapter(direction: -1 | 1, initialFraction: number): Promise<void> {
+		if (!this.book) return;
+		const target = this.book.chapters[this.currentChapterIndex() + direction];
+		if (!target) return;
+		await this.openChapter(target.path, initialFraction);
+	}
+
+	private async openChapter(chapterPath: string, initialFraction: number): Promise<void> {
+		if (!this.book) return;
+		const target = this.app.vault.getAbstractFileByPath(chapterPath);
+		if (!(target instanceof TFile)) return;
+		await this.leaf.setViewState({
+			type: VIEW_TYPE_READER,
+			active: true,
+			state: {
+				filePath: target.path,
+				bookId: this.book.id,
+				initialFraction,
+			},
+		});
 	}
 
 	private setupRepagination(): void {
