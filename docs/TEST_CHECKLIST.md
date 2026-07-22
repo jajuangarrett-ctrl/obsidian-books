@@ -50,11 +50,11 @@ using the dedicated `obsidian-books-test` vault.
 | Tables                      | Pass    | Native rendered table visible and aligned                                                                   |
 | Inline and fenced code      | Pass    | Both forms rendered through `MarkdownRenderer`                                                              |
 | Dataview                    | Pass    | Dataview 0.5.68 rendered a live three-row table through its Markdown post-processor                         |
-| Tasks                       | Pass    | Tasks 8.2.2 rendered interactive query results; standard checkboxes also passed                            |
+| Tasks                       | Pass    | Tasks 8.2.2 rendered interactive query results; standard checkboxes also passed                             |
 | Mermaid                     | Pass    | Diagram rendered in the stress fixture                                                                      |
 | Note and block embeds       | Pass    | Embedded note rendered with its heading and backlink                                                        |
 | PDFs                        | Pass    | A real one-page PDF rendered completely and selected the native vertical fallback                           |
-| Audio and video             | Pass    | Native controls responded to play/pause, and content after every embed remained reachable                  |
+| Audio and video             | Pass    | Native controls responded to play/pause, and content after every embed remained reachable                   |
 | Footnotes                   | Pass    | Footnote content and return link rendered                                                                   |
 | Internal and external links | Pending | Both render and remain excluded from page turns; full navigation automation remains                         |
 | Checkboxes                  | Pass    | Checkbox changed state without changing the current reader page                                             |

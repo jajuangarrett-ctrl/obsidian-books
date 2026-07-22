@@ -202,6 +202,7 @@ export class ReaderView extends ItemView {
 		this.stage.setAttribute('role', 'main');
 		this.content = this.stage.createDiv({ cls: 'books-content markdown-rendered' });
 		this.content.setAttribute('role', 'article');
+		this.registerDomEvent(this.content, 'click', (event) => this.openInternalLink(event));
 
 		this.previousButton = this.viewport.createEl('button', {
 			cls: 'books-nav-button books-previous books-ui',
@@ -1060,6 +1061,22 @@ export class ReaderView extends ItemView {
 
 	private isInteractive(target: EventTarget | null): boolean {
 		return target instanceof Element && Boolean(target.closest(INTERACTIVE_SELECTOR));
+	}
+
+	private openInternalLink(event: MouseEvent): void {
+		if (!(event.target instanceof Element)) return;
+		const link = event.target.closest<HTMLAnchorElement>('a.internal-link');
+		if (!link || !this.content.contains(link)) return;
+		const linkText = link.dataset.href ?? link.getAttribute('href');
+		if (!linkText || linkText.startsWith('#')) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+		void this.app.workspace.openLinkText(
+			linkText,
+			this.filePath ?? '',
+			event.metaKey || event.ctrlKey,
+		);
 	}
 
 	private isScrollable(target: EventTarget | null): boolean {
