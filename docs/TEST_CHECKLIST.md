@@ -13,6 +13,7 @@ Statuses: **Pass**, **Fail**, **Pending**, or **Physical device required**.
 | Unit tests        | Pass   | 9 tests across pagination geometry, normalized position conversion, and settings migration |
 | Type check        | Pass   | Strict TypeScript through `npm run build`                                                  |
 | Production bundle | Pass   | esbuild produces `main.js`                                                                 |
+| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation               |
 
 ## Desktop reader
 
