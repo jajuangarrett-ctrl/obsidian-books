@@ -144,8 +144,6 @@ The production bundle is `main.js`; Obsidian also requires `manifest.json` and
   quote block from its Markdown destination; that user-owned text must be edited
   or removed directly.
 - Mobile and iPad behavior has not yet been validated on a physical iPad.
-- Reduced-motion and increased-contrast styles are implemented, but those two
-  operating-system preference modes still need direct manual passes.
 
 Oversized chapters automatically switch to a native vertical reading flow:
 

@@ -4,6 +4,8 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-07-22
+
 ### Added
 
 - Public Obsidian Books repository preserving the MD Reader 1.1.0 Git history.
@@ -47,6 +49,8 @@ All notable changes to Obsidian Books will be documented in this file.
   bookshelf workflow, bookmark, annotation destination, and vertical fallback.
 - Completed direct compatibility passes with Dataview 0.5.68, Tasks 8.2.2, a
   rendered PDF, native audio, and native video.
+- Delegated rendered vault links through the supported workspace API so
+  vault-root paths open reliably from the custom reader view.
 
 ### Removed
 

@@ -35,30 +35,30 @@ using the dedicated `obsidian-books-test` vault.
 | Immersive mode enters and exits safely                | Pass                     | Pointer reveal/hide and Escape reveal passed                                                            |
 | Light and dark Obsidian themes                        | Pass                     | Theme-derived light and dark surfaces passed; cream override also passed                                |
 | Minimum and maximum font/spacing settings             | Pass                     | Font, line height, paragraph spacing, margin, and gap extremes remained readable                        |
-| Reduced motion                                        | Pending                  |                                                                                                         |
-| Increased contrast and visible focus                  | Pending                  | Focus styling is present; the operating-system increased-contrast mode still needs a direct pass        |
+| Reduced motion                                        | Pass                     | DevTools media emulation matched `reduce` and produced a `0s` reader-stage transition                   |
+| Increased contrast and visible focus                  | Pass                     | DevTools media emulation matched `more`, added the 1px progress border, and retained focus styling      |
 | Keyboard-only operation                               | Pass                     | Command launch and all primary page-navigation keys passed                                              |
 | Screen-reader labels and page announcements           | Physical device required | Accessibility tree exposes labelled reader, buttons, headings, and progress; VoiceOver remains untested |
 
 ## Rendered Markdown compatibility
 
-| Content                     | Status  | Notes                                                                                                       |
-| --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
-| Long prose and headings     | Pass    | Stress fixture paginates across responsive one- and two-page layouts                                        |
-| Images                      | Pass    | Local SVG cover rendered in the reader                                                                      |
-| Callouts                    | Pass    | Native rendered callout visible and themed                                                                  |
-| Tables                      | Pass    | Native rendered table visible and aligned                                                                   |
-| Inline and fenced code      | Pass    | Both forms rendered through `MarkdownRenderer`                                                              |
-| Dataview                    | Pass    | Dataview 0.5.68 rendered a live three-row table through its Markdown post-processor                         |
-| Tasks                       | Pass    | Tasks 8.2.2 rendered interactive query results; standard checkboxes also passed                             |
-| Mermaid                     | Pass    | Diagram rendered in the stress fixture                                                                      |
-| Note and block embeds       | Pass    | Embedded note rendered with its heading and backlink                                                        |
-| PDFs                        | Pass    | A real one-page PDF rendered completely and selected the native vertical fallback                           |
-| Audio and video             | Pass    | Native controls responded to play/pause, and content after every embed remained reachable                   |
-| Footnotes                   | Pass    | Footnote content and return link rendered                                                                   |
-| Internal and external links | Pending | Both render and remain excluded from page turns; full navigation automation remains                         |
-| Checkboxes                  | Pass    | Checkbox changed state without changing the current reader page                                             |
-| Oversized content fallback  | Pass    | 50-line code fixture switched to vertical flow; Page Down and wheel reached 81–100% and reopen restored 81% |
+| Content                     | Status | Notes                                                                                                       |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| Long prose and headings     | Pass   | Stress fixture paginates across responsive one- and two-page layouts                                        |
+| Images                      | Pass   | Local SVG cover rendered in the reader                                                                      |
+| Callouts                    | Pass   | Native rendered callout visible and themed                                                                  |
+| Tables                      | Pass   | Native rendered table visible and aligned                                                                   |
+| Inline and fenced code      | Pass   | Both forms rendered through `MarkdownRenderer`                                                              |
+| Dataview                    | Pass   | Dataview 0.5.68 rendered a live three-row table through its Markdown post-processor                         |
+| Tasks                       | Pass   | Tasks 8.2.2 rendered interactive query results; standard checkboxes also passed                             |
+| Mermaid                     | Pass   | Diagram rendered in the stress fixture                                                                      |
+| Note and block embeds       | Pass   | Embedded note rendered with its heading and backlink                                                        |
+| PDFs                        | Pass   | A real one-page PDF rendered completely and selected the native vertical fallback                           |
+| Audio and video             | Pass   | Native controls responded to play/pause, and content after every embed remained reachable                   |
+| Footnotes                   | Pass   | Footnote content and return link rendered                                                                   |
+| Internal and external links | Pass   | Internal link opened its vault note; external link opened `obsidian.md` in Safari without paginating        |
+| Checkboxes                  | Pass   | Checkbox changed state without changing the current reader page                                             |
+| Oversized content fallback  | Pass   | 50-line code fixture switched to vertical flow; Page Down and wheel reached 81–100% and reopen restored 81% |
 
 ## Touch and mobile conflicts
 
