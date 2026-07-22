@@ -215,28 +215,21 @@ export class ReaderSettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.booksPlugin.settings.quoteDestination = value as QuoteDestination;
 					await save();
-					this.display();
 				}),
 		);
 
-		if (this.booksPlugin.settings.quoteDestination === 'single-note') {
-			new Setting(containerEl).setName(t('quotesNotePath')).addText((text) =>
-				text.setValue(this.booksPlugin.settings.quotesNotePath).onChange(async (value) => {
-					this.booksPlugin.settings.quotesNotePath = value;
-					await this.booksPlugin.saveAll();
-				}),
-			);
-		}
+		new Setting(containerEl).setName(t('quotesNotePath')).addText((text) =>
+			text.setValue(this.booksPlugin.settings.quotesNotePath).onChange(async (value) => {
+				this.booksPlugin.settings.quotesNotePath = value;
+				await this.booksPlugin.saveAll();
+			}),
+		);
 
-		if (this.booksPlugin.settings.quoteDestination === 'folder') {
-			new Setting(containerEl).setName(t('annotationsFolder')).addText((text) =>
-				text
-					.setValue(this.booksPlugin.settings.annotationsFolder)
-					.onChange(async (value) => {
-						this.booksPlugin.settings.annotationsFolder = value;
-						await this.booksPlugin.saveAll();
-					}),
-			);
-		}
+		new Setting(containerEl).setName(t('annotationsFolder')).addText((text) =>
+			text.setValue(this.booksPlugin.settings.annotationsFolder).onChange(async (value) => {
+				this.booksPlugin.settings.annotationsFolder = value;
+				await this.booksPlugin.saveAll();
+			}),
+		);
 	}
 }

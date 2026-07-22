@@ -686,10 +686,9 @@ export class ReaderView extends ItemView {
 	}
 
 	private headingForRange(range: Range): string | undefined {
-		const startElement =
-			range.startContainer.instanceOf(Element)
-				? range.startContainer
-				: range.startContainer.parentElement;
+		const startElement = range.startContainer.instanceOf(Element)
+			? range.startContainer
+			: range.startContainer.parentElement;
 		if (!startElement) return undefined;
 		const ancestor = startElement.closest('h1, h2, h3, h4, h5, h6');
 		if (ancestor?.textContent?.trim()) return ancestor.textContent.trim();
@@ -780,7 +779,7 @@ export class ReaderView extends ItemView {
 			let selected = segment.node;
 			if (segment.end < selected.data.length) selected.splitText(segment.end);
 			if (segment.start > 0) selected = selected.splitText(segment.start);
-			const mark = this.contentEl.ownerDocument.win.createEl('mark');
+			const mark = this.content.createEl('mark');
 			mark.className = `books-highlight books-highlight-${annotation.kind}`;
 			mark.dataset.annotationId = annotation.id;
 			mark.title = annotation.kind === 'quote' ? t('saveQuote') : t('highlightSelection');
