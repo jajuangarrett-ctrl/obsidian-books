@@ -231,5 +231,33 @@ export class ReaderSettingTab extends PluginSettingTab {
 				await this.booksPlugin.saveAll();
 			}),
 		);
+
+		new Setting(containerEl)
+			.setName(t('commandExportHighlights'))
+			.setDesc(t('exportHighlightsDescription'))
+			.addButton((button) =>
+				button.setButtonText(t('export')).onClick(async () => {
+					button.setDisabled(true);
+					try {
+						await this.booksPlugin.exportAllHighlights();
+					} finally {
+						button.setDisabled(false);
+					}
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName(t('commandExportQuotes'))
+			.setDesc(t('exportQuotesDescription'))
+			.addButton((button) =>
+				button.setButtonText(t('export')).onClick(async () => {
+					button.setDisabled(true);
+					try {
+						await this.booksPlugin.exportAllQuotes();
+					} finally {
+						button.setDisabled(false);
+					}
+				}),
+			);
 	}
 }

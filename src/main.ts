@@ -8,6 +8,13 @@ import {
 	type WorkspaceLeaf,
 } from 'obsidian';
 
+import {
+	annotationExportPath,
+	formatAnnotationExport,
+	isManagedAnnotationExport,
+	timestampedAnnotationExportPath,
+	type ExportableAnnotation,
+} from './annotations/export-format';
 import { formatQuoteEntry, safeAnnotationFilename } from './annotations/quote-format';
 import { findMatchingBookmark, sortBookmarks } from './bookmarks';
 import { t } from './i18n';
@@ -24,6 +31,7 @@ import type {
 	ReaderSettings,
 	ReadingBookmark,
 	ReadingAnnotation,
+	AnnotationKind,
 } from './types';
 
 export default class ObsidianBooksPlugin extends Plugin {
@@ -79,6 +87,18 @@ export default class ObsidianBooksPlugin extends Plugin {
 			id: 'open-bookshelf',
 			name: t('commandBookshelf'),
 			callback: () => void this.openBookshelf(),
+		});
+
+		this.addCommand({
+			id: 'export-all-highlights',
+			name: t('commandExportHighlights'),
+			callback: () => void this.exportAllHighlights(),
+		});
+
+		this.addCommand({
+			id: 'export-all-quotes',
+			name: t('commandExportQuotes'),
+			callback: () => void this.exportAllQuotes(),
 		});
 
 		this.registerEvent(
@@ -303,6 +323,14 @@ export default class ObsidianBooksPlugin extends Plugin {
 		await this.openReaderTarget(file, book.id, annotation.fraction);
 	}
 
+	public async exportAllHighlights(): Promise<void> {
+		await this.exportAnnotations('highlight');
+	}
+
+	public async exportAllQuotes(): Promise<void> {
+		await this.exportAnnotations('quote');
+	}
+
 	private async openReaderTarget(
 		file: TFile,
 		bookId: string,
@@ -327,6 +355,87 @@ export default class ObsidianBooksPlugin extends Plugin {
 			console.error('Obsidian Books could not open the reader.', error);
 			new Notice(t('openError'));
 		}
+	}
+
+	private exportableAnnotations(kind: AnnotationKind): ExportableAnnotation[] {
+		return this.annotations
+			.filter((annotation) => annotation.kind === kind)
+			.map((annotation) => {
+				const source = this.app.vault.getAbstractFileByPath(annotation.sourcePath);
+				let bookTitle = annotation.chapterTitle;
+				if (source instanceof TFile) {
+					try {
+						bookTitle = this.resolveBookForFile(source, annotation.bookId).title;
+					} catch (error) {
+						console.warn(
+							`Obsidian Books could not resolve the book for ${annotation.sourcePath}.`,
+							error,
+						);
+					}
+				}
+				return {
+					...annotation,
+					bookKey: annotation.bookId ?? annotation.sourcePath,
+					bookTitle,
+				};
+			});
+	}
+
+	private async exportAnnotations(kind: AnnotationKind): Promise<void> {
+		const annotations = this.exportableAnnotations(kind);
+		if (!annotations.length) {
+			new Notice(t(kind === 'highlight' ? 'noHighlightsToExport' : 'noQuotesToExport'));
+			return;
+		}
+
+		try {
+			const generatedAt = new Date().toISOString();
+			const content = formatAnnotationExport(
+				kind,
+				annotations,
+				this.app.vault.getName(),
+				generatedAt,
+			);
+			let path = normalizePath(annotationExportPath(kind));
+			await this.ensureParentFolder(path);
+			const existing = this.app.vault.getAbstractFileByPath(path);
+			let exportedFile: TFile;
+
+			if (existing instanceof TFile) {
+				const existingContent = await this.app.vault.read(existing);
+				if (isManagedAnnotationExport(existingContent, kind)) {
+					await this.app.vault.modify(existing, content);
+					exportedFile = existing;
+				} else {
+					path = this.availableTimestampedExportPath(kind, generatedAt);
+					exportedFile = await this.app.vault.create(path, content);
+				}
+			} else if (existing) {
+				path = this.availableTimestampedExportPath(kind, generatedAt);
+				exportedFile = await this.app.vault.create(path, content);
+			} else {
+				exportedFile = await this.app.vault.create(path, content);
+			}
+
+			const leaf = this.app.workspace.getLeaf('tab');
+			await leaf.openFile(exportedFile);
+			await this.app.workspace.revealLeaf(leaf);
+			const noticeKey = kind === 'highlight' ? 'highlightsExported' : 'quotesExported';
+			new Notice(`${t(noticeKey)} ${path}`);
+		} catch (error) {
+			console.error(`Obsidian Books could not export all ${kind}s.`, error);
+			new Notice(t('exportError'));
+		}
+	}
+
+	private availableTimestampedExportPath(kind: AnnotationKind, generatedAt: string): string {
+		let suffix = 0;
+		let path = normalizePath(timestampedAnnotationExportPath(kind, generatedAt, suffix));
+		while (this.app.vault.getAbstractFileByPath(path)) {
+			suffix += 1;
+			path = normalizePath(timestampedAnnotationExportPath(kind, generatedAt, suffix));
+		}
+		return path;
 	}
 
 	public refreshOpenViews(): void {
