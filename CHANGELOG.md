@@ -4,6 +4,24 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-07-25
+
+### Added
+
+- A clearly labelled **Remove from bookshelf** button beneath every book card.
+- Persistent, non-destructive bookshelf visibility records for recently opened,
+  explicitly marked, and folder-manifest books.
+- Automatic shelf restoration when a hidden book is opened again.
+- Data migration and automated coverage for hidden-book normalization and
+  bookshelf filtering.
+
+### Changed
+
+- Separated bookshelf membership from bookmarks, highlights, quotes, reading
+  progress, and source notes so hiding a card never removes reading data.
+- Preserved hidden-book records across file and folder renames and cleaned them
+  when their source is deleted.
+
 ## [0.2.1] - 2026-07-25
 
 ### Added

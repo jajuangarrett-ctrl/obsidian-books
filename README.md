@@ -45,6 +45,8 @@ foundation.
   into the Obsidian Books plugin folder.
 - Discover recently read or explicitly marked single-note books in a searchable
   bookshelf.
+- Remove any book from the bookshelf without deleting its source, progress,
+  bookmarks, highlights, or quotes; reopening the book restores its card.
 - Keep bookshelf cards, two-line titles, metadata, and progress bars inside
   their responsive grid columns on iPad and narrow screens.
 - Discover folder books from `Book.md`, including title, author, cover, declared
@@ -88,6 +90,16 @@ When `chapters` is omitted, Markdown files beneath the folder are ordered with
 numeric-aware path sorting. Nested folders with their own `Book.md` stay separate.
 Mark a standalone note with `book: true`, `obsidian-books: true`, or `type: book`
 to keep it on the bookshelf before it has reading history.
+
+## Removing books from the bookshelf
+
+Use **Remove from bookshelf** beneath any book card to hide it from the library
+view. This is non-destructive: the source Markdown, reading position, bookmarks,
+highlights, saved quotes, and exported collections remain unchanged. Open the
+source note in Obsidian Books again whenever you want to restore the card.
+
+Bookshelf visibility is independent of annotations, so deleting a highlight or
+quote does not remove its source book from the shelf.
 
 ## Open a note
 
