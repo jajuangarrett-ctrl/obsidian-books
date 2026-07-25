@@ -784,8 +784,9 @@ export class ReaderView extends ItemView {
 
 	private openContents(): void {
 		if (!this.book || !this.file) return;
-		const currentLocationBookmarked = Boolean(
-			this.booksPlugin.findBookmark(this.file.path, this.currentFraction()),
+		const currentLocationBookmark = this.booksPlugin.findBookmark(
+			this.file.path,
+			this.currentFraction(),
 		);
 		new BookContentsModal(
 			this.app,
@@ -793,7 +794,7 @@ export class ReaderView extends ItemView {
 			this.file.path,
 			this.booksPlugin.getBookmarksForBook(this.book),
 			this.booksPlugin.getAnnotationsForBook(this.book),
-			currentLocationBookmarked,
+			currentLocationBookmark?.id,
 			() => this.toggleBookmark(),
 			(chapterPath, fraction) => {
 				void this.openChapter(chapterPath, fraction);

@@ -11,7 +11,7 @@ export class BookContentsModal extends Modal {
 		private readonly activeChapterPath: string,
 		private readonly bookmarks: readonly ReadingBookmark[],
 		private readonly annotations: readonly ReadingAnnotation[],
-		private readonly currentLocationBookmarked: boolean,
+		private readonly currentLocationBookmarkId: string | undefined,
 		private readonly onToggleCurrentBookmark: () => void,
 		private readonly onChoose: (chapterPath: string, fraction: number) => void,
 		private readonly onRemoveBookmark: (id: string) => void,
@@ -32,10 +32,10 @@ export class BookContentsModal extends Modal {
 
 		const currentBookmarkAction = this.contentEl.createEl('button', {
 			cls: 'books-current-bookmark-action',
-			text: t(this.currentLocationBookmarked ? 'removeBookmarkHere' : 'addBookmarkHere'),
+			text: t(this.currentLocationBookmarkId ? 'removeBookmarkHere' : 'addBookmarkHere'),
 			attr: {
 				type: 'button',
-				'aria-pressed': String(this.currentLocationBookmarked),
+				'aria-pressed': String(Boolean(this.currentLocationBookmarkId)),
 			},
 		});
 		currentBookmarkAction.addEventListener('click', () => {
@@ -97,6 +97,10 @@ export class BookContentsModal extends Modal {
 				remove.addEventListener('click', () => {
 					this.onRemoveBookmark(bookmark.id);
 					item.remove();
+					if (bookmark.id === this.currentLocationBookmarkId) {
+						currentBookmarkAction.setText(t('addBookmarkHere'));
+						currentBookmarkAction.setAttribute('aria-pressed', 'false');
+					}
 				});
 			}
 		}
