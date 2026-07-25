@@ -24,6 +24,7 @@ import {
 	clampPage,
 	fractionToPage,
 	pageToFraction,
+	swipePageDelta,
 } from './pagination';
 import { verticalFallbackReason, type FallbackBlockMeasurement } from './fallback';
 
@@ -386,7 +387,7 @@ export class ReaderView extends ItemView {
 			'books-surface-dark',
 		);
 		this.viewport.addClass(`books-surface-${settings.appearance}`);
-		this.content.removeClass('books-dragging');
+		this.content.removeClass('books-touch-snap');
 		this.content.style.transition =
 			settings.transition === 'slide' ? 'transform 220ms ease' : 'none';
 		this.stage.toggleClass('books-page-turn-mode', settings.transition === 'page-turn');
@@ -597,7 +598,7 @@ export class ReaderView extends ItemView {
 		this.content.style.transform = `translateX(${translateX}px)`;
 	}
 
-	private goTo(requestedPage: number): void {
+	private goTo(requestedPage: number, animate = true): void {
 		const nextPage = clampPage(requestedPage, this.totalPages);
 		if (nextPage === this.page) {
 			this.updateStatus();
@@ -606,13 +607,22 @@ export class ReaderView extends ItemView {
 
 		const direction = nextPage > this.page ? 'forward' : 'backward';
 		this.page = nextPage;
+		if (!animate) this.content.addClass('books-touch-snap');
 		this.applyTransform();
-		this.animatePageTurn(direction);
+		if (!animate) {
+			// Commit the destination transform while transitions are disabled so
+			// a touch swipe replaces the page inside the centered viewport instead
+			// of dragging the entire multi-column strip across an iPad screen.
+			this.content.getBoundingClientRect();
+			this.content.removeClass('books-touch-snap');
+		} else {
+			this.animatePageTurn(direction);
+		}
 		this.updateStatus();
 		this.savePosition();
 	}
 
-	private next(): void {
+	private next(animate = true): void {
 		if (this.verticalMode) {
 			const maximum = Math.max(0, this.viewport.scrollHeight - this.viewport.clientHeight);
 			if (this.viewport.scrollTop < maximum - 2) {
@@ -625,11 +635,11 @@ export class ReaderView extends ItemView {
 			void this.changeChapter(1, 0);
 			return;
 		}
-		if (this.page < this.totalPages - 1) this.goTo(this.page + 1);
+		if (this.page < this.totalPages - 1) this.goTo(this.page + 1, animate);
 		else void this.changeChapter(1, 0);
 	}
 
-	private previous(): void {
+	private previous(animate = true): void {
 		if (this.verticalMode) {
 			if (this.viewport.scrollTop > 2) {
 				this.viewport.scrollTop = Math.max(
@@ -641,7 +651,7 @@ export class ReaderView extends ItemView {
 			void this.changeChapter(-1, 1);
 			return;
 		}
-		if (this.page > 0) this.goTo(this.page - 1);
+		if (this.page > 0) this.goTo(this.page - 1, animate);
 		else void this.changeChapter(-1, 1);
 	}
 
@@ -1102,7 +1112,6 @@ export class ReaderView extends ItemView {
 
 	private setupInput(): void {
 		const operatingSystemEdge = 20;
-		const swipeThreshold = 45;
 		const claimThreshold = 6;
 		const tapMoveThreshold = 10;
 		const tapTimeThreshold = 300;
@@ -1118,7 +1127,6 @@ export class ReaderView extends ItemView {
 			dragging = false;
 			decided = false;
 			horizontal = false;
-			this.applySettings();
 			this.applyTransform();
 		};
 
@@ -1150,7 +1158,6 @@ export class ReaderView extends ItemView {
 				dragging = true;
 				decided = false;
 				horizontal = false;
-				this.content.addClass('books-dragging');
 			},
 			{ capture: true, passive: true },
 		);
@@ -1178,13 +1185,6 @@ export class ReaderView extends ItemView {
 				if (!horizontal) return;
 				event.stopPropagation();
 				event.preventDefault();
-				const translateX = calculateTranslation(
-					this.alignmentOffset,
-					this.page,
-					this.pageStride,
-					deltaX,
-				);
-				this.content.style.transform = `translateX(${translateX}px)`;
 			},
 			{ capture: true, passive: false },
 		);
@@ -1193,7 +1193,6 @@ export class ReaderView extends ItemView {
 			if (!dragging) return;
 			dragging = false;
 			this.lastTouchAt = Date.now();
-			this.applySettings();
 			const touch = event.changedTouches[0];
 			if (!touch) {
 				this.applyTransform();
@@ -1216,13 +1215,11 @@ export class ReaderView extends ItemView {
 				return;
 			}
 
-			if (
-				horizontal &&
-				Math.abs(deltaX) >= swipeThreshold &&
-				Math.abs(deltaX) > Math.abs(deltaY) * 1.5
-			) {
-				if (deltaX < 0) this.next();
-				else this.previous();
+			const pageDelta = horizontal ? swipePageDelta(deltaX, deltaY) : 0;
+			if (pageDelta > 0) {
+				this.next(false);
+			} else if (pageDelta < 0) {
+				this.previous(false);
 			} else {
 				this.applyTransform();
 			}

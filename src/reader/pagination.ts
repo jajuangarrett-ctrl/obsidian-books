@@ -72,11 +72,21 @@ export function calculateTranslation(
 	alignmentOffset: number,
 	page: number,
 	stride: number,
-	dragOffset = 0,
 ): number {
 	const safeAlignment = Number.isFinite(alignmentOffset) ? alignmentOffset : 0;
 	const safePage = Number.isFinite(page) ? Math.max(0, page) : 0;
 	const safeStride = Number.isFinite(stride) ? Math.max(0, stride) : 0;
-	const safeDrag = Number.isFinite(dragOffset) ? dragOffset : 0;
-	return safeAlignment - safePage * safeStride + safeDrag;
+	return safeAlignment - safePage * safeStride;
+}
+
+export function swipePageDelta(deltaX: number, deltaY: number, swipeThreshold = 45): -1 | 0 | 1 {
+	if (
+		!Number.isFinite(deltaX) ||
+		!Number.isFinite(deltaY) ||
+		Math.abs(deltaX) < swipeThreshold ||
+		Math.abs(deltaX) <= Math.abs(deltaY) * 1.5
+	) {
+		return 0;
+	}
+	return deltaX < 0 ? 1 : -1;
 }

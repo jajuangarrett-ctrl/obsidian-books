@@ -8,6 +8,7 @@ import {
 	clampPage,
 	fractionToPage,
 	pageToFraction,
+	swipePageDelta,
 } from '../src/reader/pagination';
 
 describe('pagination geometry', () => {
@@ -56,10 +57,16 @@ describe('pagination geometry', () => {
 		expect(calculateTotalPages(0, 40, 0)).toBe(1);
 	});
 
-	it('aligns a centered column strip before applying page and drag offsets', () => {
+	it('aligns every page to the centered clipping stage', () => {
 		expect(calculateTranslation(368, 0, 637.5)).toBe(368);
 		expect(calculateTranslation(368, 1, 637.5)).toBe(-269.5);
-		expect(calculateTranslation(368, 1, 637.5, 45)).toBe(-224.5);
+	});
+
+	it('recognizes deliberate horizontal swipes without exposing a drag offset', () => {
+		expect(swipePageDelta(-80, 8)).toBe(1);
+		expect(swipePageDelta(80, 8)).toBe(-1);
+		expect(swipePageDelta(30, 2)).toBe(0);
+		expect(swipePageDelta(80, 70)).toBe(0);
 	});
 });
 
