@@ -238,6 +238,27 @@
 	color: var(--interactive-accent);
 }
 
+.books-highlight-button.is-active {
+	color: #5a4300;
+	background: color-mix(in srgb, #ffd54f 74%, var(--books-control));
+	border-color: color-mix(in srgb, #b88700 72%, var(--books-border));
+	box-shadow: 0 0 0 2px color-mix(in srgb, #ffd54f 30%, transparent);
+}
+
+.books-viewport.books-highlight-mode {
+	touch-action: none;
+}
+
+.books-highlight-mode .books-content,
+.books-highlight-mode .books-content * {
+	cursor: crosshair;
+}
+
+.books-highlight-mode .books-content ::selection {
+	color: inherit;
+	background: color-mix(in srgb, #ffd54f 62%, transparent);
+}
+
 .books-highlight {
 	padding: 0.02em 0;
 	color: inherit;

@@ -847,21 +847,25 @@ export class ReaderView extends ItemView {
 	private setupSelectionCapture(): void {
 		const update = (): void => {
 			this.selectionCapture = this.captureSelection();
-			const enabled = Boolean(this.selectionCapture);
-			this.highlightButton.disabled = !enabled;
-			this.quoteButton.disabled = !enabled;
+			this.quoteButton.disabled = !this.selectionCapture;
+			this.updateHighlightButton();
 		};
 		this.registerDomEvent(this.viewport, 'mouseup', update);
 		this.registerDomEvent(this.viewport, 'keyup', update);
 		this.registerDomEvent(this.viewport, 'touchend', () => {
 			window.setTimeout(update, 0);
 		});
+		this.registerDomEvent(this.contentEl.ownerDocument, 'selectionchange', update);
+		update();
 	}
 
 	private captureSelection(): SelectionCapture | null {
 		const selection = this.contentEl.ownerDocument.getSelection();
 		if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) return null;
-		const range = selection.getRangeAt(0);
+		return this.captureRange(selection.getRangeAt(0));
+	}
+
+	private captureRange(range: Range): SelectionCapture | null {
 		if (!this.content.contains(range.commonAncestorContainer)) return null;
 		const rawText = range.toString();
 		const selectedText = rawText.trim();
@@ -880,6 +884,35 @@ export class ReaderView extends ItemView {
 			heading: this.headingForRange(range),
 			fraction: this.currentFraction(),
 		};
+	}
+
+	private clearNativeSelection(): void {
+		this.contentEl.ownerDocument.getSelection()?.removeAllRanges();
+		this.selectionCapture = null;
+		this.quoteButton.disabled = true;
+		this.updateHighlightButton();
+	}
+
+	private updateHighlightButton(): void {
+		if (!this.highlightButton) return;
+		const label = this.highlightMode
+			? t('disableHighlightMode')
+			: this.selectionCapture
+				? t('highlightSelection')
+				: t('enableHighlightMode');
+		this.highlightButton.toggleClass('is-active', this.highlightMode);
+		this.highlightButton.setAttribute('aria-pressed', String(this.highlightMode));
+		this.highlightButton.setAttribute('aria-label', label);
+		this.highlightButton.title = label;
+	}
+
+	private setHighlightMode(enabled: boolean, announce = false): void {
+		this.highlightMode = enabled;
+		this.viewport?.toggleClass('books-highlight-mode', enabled);
+		this.updateHighlightButton();
+		if (!enabled) this.clearNativeSelection();
+		if (!announce) return;
+		new Notice(t(enabled ? 'highlightModeEnabled' : 'highlightModeDisabled'));
 	}
 
 	private headingForRange(range: Range): string | undefined {
@@ -901,8 +934,189 @@ export class ReaderView extends ItemView {
 		return preceding?.textContent?.trim() || undefined;
 	}
 
-	private saveSelection(kind: 'highlight' | 'quote'): void {
-		const capture = this.selectionCapture ?? this.captureSelection();
+	private caretBoundaryAt(clientX: number, clientY: number): DomBoundaryPoint | null {
+		const document = this.contentEl.ownerDocument as Document & {
+			caretPositionFromPoint?: (
+				x: number,
+				y: number,
+			) => { offsetNode: Node; offset: number } | null;
+			caretRangeFromPoint?: (x: number, y: number) => Range | null;
+		};
+		const position = document.caretPositionFromPoint?.(clientX, clientY);
+		const node = position?.offsetNode;
+		if (node && this.content.contains(node)) {
+			return { node, offset: position.offset };
+		}
+		const range = document.caretRangeFromPoint?.(clientX, clientY);
+		if (!range || !this.content.contains(range.startContainer)) return null;
+		return { node: range.startContainer, offset: range.startOffset };
+	}
+
+	private rangeBetween(start: DomBoundaryPoint, end: DomBoundaryPoint): Range | null {
+		const document = this.contentEl.ownerDocument;
+		try {
+			const startProbe = document.createRange();
+			startProbe.setStart(start.node, start.offset);
+			startProbe.collapse(true);
+			const endProbe = document.createRange();
+			endProbe.setStart(end.node, end.offset);
+			endProbe.collapse(true);
+			const startFollowsEnd = startProbe.compareBoundaryPoints(0, endProbe) > 0;
+			const range = document.createRange();
+			const first = startFollowsEnd ? end : start;
+			const last = startFollowsEnd ? start : end;
+			range.setStart(first.node, first.offset);
+			range.setEnd(last.node, last.offset);
+			return this.content.contains(range.commonAncestorContainer) ? range : null;
+		} catch (error) {
+			console.warn('Obsidian Books could not resolve the highlight drag range.', error);
+			return null;
+		}
+	}
+
+	private showHighlightPreview(range: Range): void {
+		const selection = this.contentEl.ownerDocument.getSelection();
+		if (!selection) return;
+		selection.removeAllRanges();
+		selection.addRange(range);
+	}
+
+	private setupHighlightGesture(): void {
+		let pointerId: number | null = null;
+		let startBoundary: DomBoundaryPoint | null = null;
+		let latestRange: Range | null = null;
+		let startPoint: GesturePoint | null = null;
+		let dragged = false;
+
+		const reset = (clearSelection: boolean): void => {
+			if (
+				pointerId !== null &&
+				this.viewport.hasPointerCapture?.(pointerId)
+			) {
+				this.viewport.releasePointerCapture(pointerId);
+			}
+			pointerId = null;
+			startBoundary = null;
+			latestRange = null;
+			startPoint = null;
+			dragged = false;
+			if (clearSelection) this.clearNativeSelection();
+		};
+
+		this.registerDomEvent(
+			this.viewport,
+			'pointerdown',
+			(event) => {
+				const target = event.target;
+				const insideContent =
+					target instanceof Node &&
+					(target === this.content || this.content.contains(target));
+				if (
+					!canStartHighlightGesture({
+						enabled: this.highlightMode,
+						isPrimary: event.isPrimary,
+						button: event.button,
+						pointerType: event.pointerType,
+						insideContent,
+						interactive: this.isInteractive(target),
+					})
+				) {
+					return;
+				}
+				const boundary = this.caretBoundaryAt(event.clientX, event.clientY);
+				if (!boundary) return;
+				event.preventDefault();
+				event.stopPropagation();
+				pointerId = event.pointerId;
+				startBoundary = boundary;
+				startPoint = { x: event.clientX, y: event.clientY };
+				latestRange = null;
+				dragged = false;
+				this.viewport.setPointerCapture?.(event.pointerId);
+				this.clearNativeSelection();
+			},
+			{ capture: true, passive: false },
+		);
+
+		this.registerDomEvent(
+			this.viewport,
+			'pointermove',
+			(event) => {
+				if (
+					pointerId !== event.pointerId ||
+					!startBoundary ||
+					!startPoint
+				) {
+					return;
+				}
+				event.preventDefault();
+				event.stopPropagation();
+				dragged ||= hasHighlightDrag(startPoint, {
+					x: event.clientX,
+					y: event.clientY,
+				});
+				if (!dragged) return;
+				const endBoundary = this.caretBoundaryAt(event.clientX, event.clientY);
+				if (!endBoundary) return;
+				const range = this.rangeBetween(startBoundary, endBoundary);
+				if (!range || range.collapsed) return;
+				latestRange = range;
+				this.showHighlightPreview(range);
+			},
+			{ capture: true, passive: false },
+		);
+
+		const finish = (event: PointerEvent): void => {
+			if (pointerId !== event.pointerId) return;
+			event.preventDefault();
+			event.stopPropagation();
+			this.lastHighlightGestureAt = Date.now();
+			const endBoundary = this.caretBoundaryAt(event.clientX, event.clientY);
+			const finalRange =
+				dragged && startBoundary && endBoundary
+					? this.rangeBetween(startBoundary, endBoundary)
+					: latestRange;
+			const capture =
+				finalRange && !finalRange.collapsed ? this.captureRange(finalRange) : null;
+			reset(false);
+			if (!capture) {
+				this.clearNativeSelection();
+				return;
+			}
+			this.selectionCapture = capture;
+			this.saveSelection('highlight', capture);
+		};
+
+		this.registerDomEvent(this.viewport, 'pointerup', finish, {
+			capture: true,
+			passive: false,
+		});
+		this.registerDomEvent(
+			this.viewport,
+			'pointercancel',
+			(event) => {
+				if (pointerId !== event.pointerId) return;
+				this.lastHighlightGestureAt = Date.now();
+				reset(true);
+			},
+			{ capture: true },
+		);
+		this.registerDomEvent(
+			this.viewport,
+			'lostpointercapture',
+			(event) => {
+				if (pointerId !== event.pointerId) return;
+				reset(true);
+			},
+			{ capture: true },
+		);
+	}
+
+	private saveSelection(
+		kind: 'highlight' | 'quote',
+		explicitCapture?: SelectionCapture,
+	): void {
+		const capture = explicitCapture ?? this.selectionCapture ?? this.captureSelection();
 		if (!capture || !this.file || !this.book) {
 			new Notice(t('selectTextFirst'));
 			return;
@@ -920,10 +1134,19 @@ export class ReaderView extends ItemView {
 			fraction: capture.fraction,
 			createdAt: new Date().toISOString(),
 		};
+		const verticalFraction = this.verticalMode ? this.currentFraction() : null;
+		this.clearNativeSelection();
 
 		if (kind === 'highlight') {
 			this.booksPlugin.addHighlight(annotation);
 			this.wrapAnnotation(annotation);
+			if (verticalFraction !== null) {
+				this.contentEl.win.requestAnimationFrame(() => {
+					this.restoreVerticalFraction(verticalFraction);
+				});
+			} else {
+				this.applyTransform();
+			}
 			new Notice(t('highlightAdded'));
 			return;
 		}
@@ -932,6 +1155,13 @@ export class ReaderView extends ItemView {
 			.addQuote(this.book, annotation)
 			.then(() => {
 				this.wrapAnnotation(annotation);
+				if (verticalFraction !== null) {
+					this.contentEl.win.requestAnimationFrame(() => {
+						this.restoreVerticalFraction(verticalFraction);
+					});
+				} else {
+					this.applyTransform();
+				}
 				new Notice(t('quoteSaved'));
 			})
 			.catch((error: unknown) => {
@@ -1081,7 +1311,13 @@ export class ReaderView extends ItemView {
 			if (this.verticalMode) this.restoreVerticalFraction(1);
 			else this.goTo(this.totalPages - 1);
 		});
-		register([], 'Escape', () => this.exitReadingChrome());
+		register([], 'Escape', () => {
+			if (this.highlightMode) {
+				this.setHighlightMode(false, true);
+				return;
+			}
+			this.exitReadingChrome();
+		});
 		this.readerScope = scope;
 	}
 
@@ -1165,6 +1401,7 @@ export class ReaderView extends ItemView {
 			(event) => {
 				if (
 					event.touches.length !== 1 ||
+					!pageGestureAllowed(this.highlightMode, this.hasTextSelection()) ||
 					this.isInteractive(event.target) ||
 					this.isScrollable(event.target)
 				) {
@@ -1196,6 +1433,10 @@ export class ReaderView extends ItemView {
 			'touchmove',
 			(event) => {
 				if (!dragging) return;
+				if (!pageGestureAllowed(this.highlightMode, this.hasTextSelection())) {
+					abortDrag();
+					return;
+				}
 				const touch = event.touches[0];
 				if (!touch) return;
 				const deltaX = touch.clientX - startX;
@@ -1222,6 +1463,10 @@ export class ReaderView extends ItemView {
 			if (!dragging) return;
 			dragging = false;
 			this.lastTouchAt = Date.now();
+			if (!pageGestureAllowed(this.highlightMode, this.hasTextSelection())) {
+				this.applyTransform();
+				return;
+			}
 			const touch = event.changedTouches[0];
 			if (!touch) {
 				this.applyTransform();
@@ -1266,6 +1511,12 @@ export class ReaderView extends ItemView {
 		this.registerDomEvent(this.viewport, 'click', (event) => {
 			if (this.openInternalLink(event)) return;
 			if (this.lastTouchAt && Date.now() - this.lastTouchAt < 700) return;
+			if (
+				this.lastHighlightGestureAt &&
+				Date.now() - this.lastHighlightGestureAt < 700
+			) {
+				return;
+			}
 			if (
 				this.isInteractive(event.target) ||
 				this.isScrollable(event.target) ||

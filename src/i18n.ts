@@ -32,6 +32,11 @@ const STRINGS = {
 		bookmarkAdded: 'Bookmark added.',
 		bookmarkRemoved: 'Bookmark removed.',
 		highlightSelection: 'Highlight selection',
+		enableHighlightMode: 'Turn on highlight mode',
+		disableHighlightMode: 'Turn off highlight mode',
+		highlightModeEnabled:
+			'Highlight mode on. Drag across text with a finger, Apple Pencil, or mouse.',
+		highlightModeDisabled: 'Highlight mode off.',
 		saveQuote: 'Save selected quote',
 		selectTextFirst: 'Select text in the chapter first.',
 		highlightAdded: 'Highlight added without changing the source note.',
@@ -144,6 +149,11 @@ const STRINGS = {
 		bookmarkAdded: 'Закладка добавлена.',
 		bookmarkRemoved: 'Закладка удалена.',
 		highlightSelection: 'Выделить выбранный текст',
+		enableHighlightMode: 'Включить режим выделения',
+		disableHighlightMode: 'Выключить режим выделения',
+		highlightModeEnabled:
+			'Режим выделения включён. Проведите по тексту пальцем, Apple Pencil или мышью.',
+		highlightModeDisabled: 'Режим выделения выключен.',
 		saveQuote: 'Сохранить выбранную цитату',
 		selectTextFirst: 'Сначала выберите текст в главе.',
 		highlightAdded: 'Выделение добавлено без изменения исходной заметки.',
