@@ -60,9 +60,11 @@ describe('annotation exports', () => {
 		);
 
 		expect(highlights).toContain('# All Highlights');
+		expect(highlights).toContain('1 highlight from 1 book.');
 		expect(highlights).toContain('> highlight text');
 		expect(highlights).not.toContain('A saved quotation.');
 		expect(quotes).toContain('# All Quotes');
+		expect(quotes).toContain('1 quote from 1 book.');
 		expect(quotes).toContain('> A saved quotation.');
 		expect(quotes).toContain('[[Obsidian Books/Quotes]]');
 		expect(quotes).not.toContain('highlight text');

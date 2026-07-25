@@ -104,7 +104,7 @@ export function formatAnnotationExport(
 	const matching = annotations.filter((annotation) => annotation.kind === kind);
 	const sorted = [...matching].sort(compareAnnotations);
 	const bookCount = new Set(sorted.map((annotation) => annotation.bookKey)).size;
-	const kindLabel = pluralKind(kind);
+	const kindLabel = sorted.length === 1 ? kind : pluralKind(kind);
 	const lines = [
 		`# All ${displayKind(kind)}`,
 		'',
