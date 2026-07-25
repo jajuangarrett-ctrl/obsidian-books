@@ -16,6 +16,9 @@ const STRINGS = {
 		emptyBookshelf:
 			'No books yet. Open a note in Obsidian Books, mark a note with book: true, or add Book.md to a folder.',
 		openBook: 'Open book',
+		removeFromBookshelf: 'Remove from bookshelf',
+		bookRemovedFromShelf:
+			'Removed from bookshelf. Open the note in Obsidian Books to restore it.',
 		commandBookshelf: 'Open Obsidian Books bookshelf',
 		commandExportHighlights: 'Export all highlights',
 		commandExportQuotes: 'Export all quotes',
@@ -133,6 +136,9 @@ const STRINGS = {
 		emptyBookshelf:
 			'Книг пока нет. Откройте заметку в Obsidian Books, добавьте book: true или Book.md в папку.',
 		openBook: 'Открыть книгу',
+		removeFromBookshelf: 'Убрать с книжной полки',
+		bookRemovedFromShelf:
+			'Книга убрана с полки. Откройте заметку в Obsidian Books, чтобы вернуть её.',
 		commandBookshelf: 'Открыть книжную полку Obsidian Books',
 		commandExportHighlights: 'Экспортировать все выделения',
 		commandExportQuotes: 'Экспортировать все цитаты',

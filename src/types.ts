@@ -69,12 +69,13 @@ export interface ReadingAnnotation extends ReadingPosition {
 }
 
 export interface PersistedData {
-	schemaVersion: 4;
+	schemaVersion: 5;
 	settings: ReaderSettings;
 	positions: PositionMap;
 	bookProgress: BookProgressMap;
 	bookmarks: ReadingBookmark[];
 	annotations: ReadingAnnotation[];
+	hiddenBookIds: string[];
 }
 
 export interface LegacyData extends Partial<ReaderSettings> {

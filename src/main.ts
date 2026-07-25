@@ -21,6 +21,7 @@ import { t } from './i18n';
 import { BookLibrary } from './books/discovery';
 import type { BookRecord } from './books/domain';
 import { BookshelfView, VIEW_TYPE_BOOKSHELF } from './bookshelf/BookshelfView';
+import { visibleBooks } from './bookshelf/visibility';
 import { ReaderView, VIEW_TYPE_READER } from './reader/ReaderView';
 import { migratePersistedData } from './settings-data';
 import { ReaderSettingTab } from './settings-tab';
@@ -40,6 +41,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 	public bookProgress: BookProgressMap = {};
 	public bookmarks: ReadingBookmark[] = [];
 	public annotations: ReadingAnnotation[] = [];
+	public hiddenBookIds = new Set<string>();
 
 	private lastSaved = '';
 	private immersiveDocument: Document | null = null;
@@ -53,6 +55,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 		this.bookProgress = data.bookProgress;
 		this.bookmarks = data.bookmarks;
 		this.annotations = data.annotations;
+		this.hiddenBookIds = new Set(data.hiddenBookIds);
 		this.library = new BookLibrary(this.app);
 		this.lastSaved = JSON.stringify(this.dataBlob());
 
@@ -204,8 +207,18 @@ export default class ObsidianBooksPlugin extends Plugin {
 	}
 
 	public getBooks(): BookRecord[] {
-		this.cachedBooks ??= this.library.discover(Object.keys(this.positions));
+		this.cachedBooks ??= visibleBooks(
+			this.library.discover(Object.keys(this.positions)),
+			this.hiddenBookIds,
+		);
 		return this.cachedBooks;
+	}
+
+	public async removeBookFromShelf(book: BookRecord): Promise<void> {
+		this.hiddenBookIds.add(book.id);
+		this.invalidateBooks();
+		await this.saveAll();
+		new Notice(t('bookRemovedFromShelf'));
 	}
 
 	public resolveBookForFile(file: TFile, hintedId?: string): BookRecord {
@@ -336,6 +349,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 		bookId: string,
 		initialFraction?: number,
 	): Promise<void> {
+		await this.restoreBookToShelf(bookId);
 		let leaf: WorkspaceLeaf;
 		try {
 			if (this.settings.openIn === 'current') leaf = this.app.workspace.getLeaf(false);
@@ -490,12 +504,13 @@ export default class ObsidianBooksPlugin extends Plugin {
 
 	private dataBlob(): PersistedData {
 		return {
-			schemaVersion: 4,
+			schemaVersion: 5,
 			settings: this.settings,
 			positions: this.positions,
 			bookProgress: this.bookProgress,
 			bookmarks: this.bookmarks,
 			annotations: this.annotations,
+			hiddenBookIds: [...this.hiddenBookIds],
 		};
 	}
 
@@ -562,6 +577,12 @@ export default class ObsidianBooksPlugin extends Plugin {
 		for (const view of this.bookshelfViews()) void view.refresh();
 	}
 
+	private async restoreBookToShelf(bookId: string): Promise<void> {
+		if (!this.hiddenBookIds.delete(bookId)) return;
+		this.invalidateBooks();
+		await this.saveAll();
+	}
+
 	private documentForLeaf(leaf: WorkspaceLeaf | null): Document {
 		return leaf?.view.containerEl.ownerDocument ?? document;
 	}
@@ -624,6 +645,13 @@ export default class ObsidianBooksPlugin extends Plugin {
 					: undefined,
 			};
 		});
+		this.hiddenBookIds = new Set(
+			[...this.hiddenBookIds].map((bookId) => {
+				const colon = bookId.indexOf(':');
+				if (colon < 0) return bookId;
+				return `${bookId.slice(0, colon + 1)}${rewrite(bookId.slice(colon + 1))}`;
+			}),
+		);
 		this.invalidateBooks();
 	}
 
@@ -670,6 +698,12 @@ export default class ObsidianBooksPlugin extends Plugin {
 						? undefined
 						: annotation.destinationPath,
 			}));
+		for (const bookId of this.hiddenBookIds) {
+			const sourcePath = bookId.slice(bookId.indexOf(':') + 1);
+			if (sourcePath === file.path || sourcePath.startsWith(prefix)) {
+				this.hiddenBookIds.delete(bookId);
+			}
+		}
 		this.invalidateBooks();
 	}
 }

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_SETTINGS, migratePersistedData, normalizeSettings } from '../src/settings-data';
+import {
+	DEFAULT_SETTINGS,
+	migratePersistedData,
+	normalizeHiddenBookIds,
+	normalizeSettings,
+} from '../src/settings-data';
 
 describe('settings migration', () => {
 	it('loads the MD Reader top-level settings and positions', () => {
@@ -23,7 +28,7 @@ describe('settings migration', () => {
 			},
 		});
 
-		expect(migrated.schemaVersion).toBe(4);
+		expect(migrated.schemaVersion).toBe(5);
 		expect(migrated.settings).toMatchObject({
 			fontSize: 1.25,
 			lineHeight: 1.8,
@@ -122,5 +127,18 @@ describe('settings migration', () => {
 		});
 
 		expect(migrated.positions).toEqual({ good: { fraction: 1 } });
+	});
+
+	it('normalizes hidden bookshelf records without duplicates', () => {
+		expect(
+			normalizeHiddenBookIds([
+				'note:Library/One.md',
+				'folder:Novel/Book.md',
+				'note:Library/One.md',
+				'unknown:Broken.md',
+				'folder:',
+				42,
+			]),
+		).toEqual(['note:Library/One.md', 'folder:Novel/Book.md']);
 	});
 });

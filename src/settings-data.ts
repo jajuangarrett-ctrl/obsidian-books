@@ -243,16 +243,31 @@ export function normalizeAnnotations(value: unknown): ReadingAnnotation[] {
 	return annotations;
 }
 
+export function normalizeHiddenBookIds(value: unknown): string[] {
+	if (!Array.isArray(value)) return [];
+	return [
+		...new Set(
+			value.filter(
+				(bookId): bookId is string =>
+					typeof bookId === 'string' &&
+					(bookId.startsWith('note:') || bookId.startsWith('folder:')) &&
+					Boolean(bookId.slice(bookId.indexOf(':') + 1).trim()),
+			),
+		),
+	];
+}
+
 export function migratePersistedData(value: unknown): PersistedData {
 	const candidate = isRecord(value) ? value : {};
 	const hasNestedSettings = isRecord(candidate.settings);
 
 	return {
-		schemaVersion: 4,
+		schemaVersion: 5,
 		settings: normalizeSettings(hasNestedSettings ? candidate.settings : candidate),
 		positions: normalizePositions(candidate.positions),
 		bookProgress: normalizeBookProgress(candidate.bookProgress),
 		bookmarks: normalizeBookmarks(candidate.bookmarks),
 		annotations: normalizeAnnotations(candidate.annotations),
+		hiddenBookIds: normalizeHiddenBookIds(candidate.hiddenBookIds),
 	};
 }

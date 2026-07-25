@@ -83,11 +83,14 @@ export class BookshelfView extends ItemView {
 	}
 
 	private renderCard(book: BookRecord, grid: HTMLElement): void {
-		const card = grid.createEl('button', {
+		const card = grid.createDiv({
 			cls: 'books-shelf-card',
+		});
+		const open = card.createEl('button', {
+			cls: 'books-shelf-open',
 			attr: { type: 'button', 'aria-label': `${t('openBook')}: ${book.title}` },
 		});
-		const cover = card.createDiv({ cls: 'books-shelf-cover' });
+		const cover = open.createDiv({ cls: 'books-shelf-cover' });
 		const coverUrl = this.booksPlugin.resolveCoverUrl(book);
 		if (coverUrl) {
 			cover.createEl('img', {
@@ -97,7 +100,7 @@ export class BookshelfView extends ItemView {
 			cover.createDiv({ cls: 'books-shelf-cover-placeholder', text: book.title.slice(0, 1) });
 		}
 
-		const metadata = card.createDiv({ cls: 'books-shelf-metadata' });
+		const metadata = open.createDiv({ cls: 'books-shelf-metadata' });
 		metadata.createEl('strong', { cls: 'books-shelf-title', text: book.title });
 		if (book.author) metadata.createDiv({ cls: 'books-shelf-author', text: book.author });
 		metadata.createDiv({
@@ -115,6 +118,19 @@ export class BookshelfView extends ItemView {
 			},
 		});
 		progress.setAttribute('title', readingProgress(fraction));
-		this.registerDomEvent(card, 'click', () => void this.booksPlugin.openBook(book));
+		this.registerDomEvent(open, 'click', () => void this.booksPlugin.openBook(book));
+
+		const remove = card.createEl('button', {
+			cls: 'books-shelf-remove',
+			text: t('removeFromBookshelf'),
+			attr: {
+				type: 'button',
+				'aria-label': `${t('removeFromBookshelf')}: ${book.title}`,
+			},
+		});
+		this.registerDomEvent(remove, 'click', () => {
+			remove.disabled = true;
+			void this.booksPlugin.removeBookFromShelf(book);
+		});
 	}
 }
