@@ -9,7 +9,8 @@ foundation.
 > [!NOTE]
 > Obsidian Books is a public development preview. Its reader, bookshelf, folder
 > books, bookmarks, source-safe annotations, quote capture, and vertical fallback
-> are implemented. Physical iPad and VoiceOver validation is still pending.
+> are implemented. Highlights and quotes can also be exported into separate
+> collection notes. Physical iPad and VoiceOver validation is still pending.
 
 ## Preview
 
@@ -53,6 +54,8 @@ foundation.
 - Save selected quotes with source, book, chapter, heading, date, location, and
   an `obsidian://` reopen link to a shared note, a per-book note, or a configured
   annotation folder.
+- Export all saved highlights or all saved quotes into separate, book- and
+  chapter-grouped Markdown collection notes.
 - Switch PDF embeds and oversized unbreakable or interactive blocks to vertical
   flow with normalized, restorable scroll progress instead of clipping content.
 
@@ -93,6 +96,19 @@ data; Obsidian Books does not insert markup into source chapters. Quotes can be
 written to one shared note, an `Annotations.md` beside each folder book, or one
 note per book in a configurable folder. The generated Markdown remains ordinary,
 editable vault content.
+
+Run **Export all highlights** or **Export all quotes** from the command palette,
+or use the matching buttons under **Settings → Obsidian Books → Quotes and
+annotations**. The plugin creates these separate collection notes:
+
+- `Obsidian Books/Exports/All Highlights.md`
+- `Obsidian Books/Exports/All Quotes.md`
+
+Each managed export is grouped by book and chapter and includes the selected
+text, source note, heading, capture date, reading location, and an Obsidian Books
+reopen link. Re-running a command refreshes its managed note. If an unrelated
+note already occupies the standard filename, Obsidian Books preserves it and
+creates a timestamped export instead.
 
 ## Manual installation
 

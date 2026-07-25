@@ -4,6 +4,19 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-24
+
+### Added
+
+- Separate **Export all highlights** and **Export all quotes** commands.
+- Matching export buttons in the Quotes and annotations settings section.
+- Managed Markdown collection notes grouped by book and chapter with source,
+  heading, capture date, location, and Obsidian Books reopen links.
+- Non-destructive collision handling that preserves an unrelated note at a
+  standard export path and creates a timestamped export instead.
+- Automated coverage for separated collections, deterministic grouping,
+  traceable metadata, managed-file detection, and collision-safe paths.
+
 ## [0.1.0] - 2026-07-22
 
 ### Added

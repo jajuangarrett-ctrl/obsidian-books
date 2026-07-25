@@ -1,6 +1,6 @@
 # Test checklist and results
 
-Last updated: 2026-07-22
+Last updated: 2026-07-24
 
 Statuses: **Pass**, **Fail**, **Pending**, or **Physical device required**. Unless
 noted otherwise, manual results below were recorded in Obsidian 1.12.7 on macOS
@@ -8,14 +8,14 @@ using the dedicated `obsidian-books-test` vault.
 
 ## Automated validation
 
-| Check             | Status | Current evidence                                                                                                                                                                          |
-| ----------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Format check      | Pass   | `npm run format:check`                                                                                                                                                                    |
-| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                                                                      |
-| Unit tests        | Pass   | 25 tests across pagination geometry, translation, normalized positions, migration, book discovery helpers, bookmarks, text-anchor recovery, quote formatting, and fallback classification |
-| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                                                                 |
-| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                                                                |
-| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                                                              |
+| Check             | Status | Current evidence                                                                                                                                                                                     |
+| ----------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Format check      | Pass   | `npm run format:check`                                                                                                                                                                               |
+| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                                                                                 |
+| Unit tests        | Pass   | 29 tests across pagination geometry, translation, normalized positions, migration, book discovery helpers, bookmarks, text-anchor recovery, quote and export formatting, and fallback classification |
+| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                                                                            |
+| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                                                                           |
+| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                                                                         |
 
 ## Desktop reader
 
@@ -76,15 +76,17 @@ using the dedicated `obsidian-books-test` vault.
 
 ## Books and study tools
 
-| Workflow                                    | Status | Notes                                                                                                              |
-| ------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
-| Single-note book                            | Pass   | Recently read stress fixture appears and opens from the bookshelf                                                  |
-| Folder book with `Book.md`                  | Pass   | Three-chapter dedicated-vault fixture discovered from its manifest                                                 |
-| Ordered chapters and one-chapter loading    | Pass   | Declared 01/02/10 order preserved; accessibility tree contained only the active chapter                            |
-| Covers and metadata                         | Pass   | SVG cover, title, author, and chapter count rendered on the shelf                                                  |
-| Table of contents and chapter navigation    | Pass   | Next/previous boundaries and direct Contents jump passed                                                           |
-| Bookmarks                                   | Pass   | Added from the toolbar, exposed in Contents, persisted across vault close/reopen, and restored by chapter/fraction |
-| Highlights survive repagination             | Pass   | Highlight persisted across plugin reload and recovered after nearby source insertion shifted offsets               |
-| Quotes write to each configured destination | Pass   | Shared note, adjacent per-book `Annotations.md`, and configured annotation folder all passed                       |
-| Quote reopens source near passage           | Pass   | Generated `obsidian://books-open` link reopened the saved book/chapter/fraction                                    |
-| Source Markdown unchanged by default        | Pass   | Highlight and quote capture left the source chapter free of injected markers                                       |
+| Workflow                                    | Status  | Notes                                                                                                              |
+| ------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| Single-note book                            | Pass    | Recently read stress fixture appears and opens from the bookshelf                                                  |
+| Folder book with `Book.md`                  | Pass    | Three-chapter dedicated-vault fixture discovered from its manifest                                                 |
+| Ordered chapters and one-chapter loading    | Pass    | Declared 01/02/10 order preserved; accessibility tree contained only the active chapter                            |
+| Covers and metadata                         | Pass    | SVG cover, title, author, and chapter count rendered on the shelf                                                  |
+| Table of contents and chapter navigation    | Pass    | Next/previous boundaries and direct Contents jump passed                                                           |
+| Bookmarks                                   | Pass    | Added from the toolbar, exposed in Contents, persisted across vault close/reopen, and restored by chapter/fraction |
+| Highlights survive repagination             | Pass    | Highlight persisted across plugin reload and recovered after nearby source insertion shifted offsets               |
+| Quotes write to each configured destination | Pass    | Shared note, adjacent per-book `Annotations.md`, and configured annotation folder all passed                       |
+| Export all highlights                       | Pending | Separate managed collection note and repeated refresh require dedicated-vault runtime validation                   |
+| Export all quotes                           | Pending | Separate managed collection note and repeated refresh require dedicated-vault runtime validation                   |
+| Quote reopens source near passage           | Pass    | Generated `obsidian://books-open` link reopened the saved book/chapter/fraction                                    |
+| Source Markdown unchanged by default        | Pass    | Highlight and quote capture left the source chapter free of injected markers                                       |
