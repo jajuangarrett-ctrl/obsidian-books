@@ -65,7 +65,7 @@ using the dedicated `obsidian-books-test` vault.
 | Workflow                                                   | Status                   | Notes                                                                            |
 | ---------------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------- |
 | Swipe page turns                                           | Pass                     | Synthetic renderer touch swipe advanced one page                                 |
-| Touch-swiped page remains centered                         | Pending                  | Stable-frame touch behavior requires a new synthetic swipe runtime pass          |
+| Touch-swiped page remains centered                         | Pass                     | At a 1027px iPad-like viewport, both swipe directions held the transform stable during movement, snapped one page, and returned exactly |
 | Text selection does not turn a page                        | Pass                     | Pointer selection enabled highlight/quote controls without changing the page     |
 | Links and checkboxes remain interactive                    | Pass                     | Checkbox toggled and both interaction types were excluded from page turning      |
 | Embedded horizontal/vertical scrolling wins over page turn | Pass                     | Synthetic swipe beginning in a scrollable child did not paginate                 |
@@ -73,7 +73,7 @@ using the dedicated `obsidian-books-test` vault.
 | Obsidian sidebars remain usable                            | Pass                     | Sidebar toggle worked and reader reflowed without losing its normalized position |
 | Mobile portrait and landscape                              | Pass                     | Desktop viewport simulation passed; physical mobile remains separate below       |
 | iPad single/two-page layouts                               | Pass                     | Narrow single-page and wide two-page viewport simulations passed                 |
-| iPad bookshelf cards and long titles                       | Pending                  | Responsive card constraints require a new narrow-viewport runtime pass           |
+| iPad bookshelf cards and long titles                       | Pass                     | Five books at a 1027px iPad-like viewport had no grid, card, title, metadata, or progress overflow; titles used at most two lines        |
 | Physical iPad touch, orientation, and VoiceOver            | Physical device required | Final device availability must be recorded                                       |
 
 ## Books and study tools
@@ -86,10 +86,10 @@ using the dedicated `obsidian-books-test` vault.
 | Covers and metadata                         | Pass    | SVG cover, title, author, and chapter count rendered on the shelf                                                  |
 | Table of contents and chapter navigation    | Pass    | Next/previous boundaries and direct Contents jump passed                                                           |
 | Bookmarks                                   | Pass    | Added from the toolbar, exposed in Contents, persisted across vault close/reopen, and restored by chapter/fraction |
-| Bookmark action in Contents                 | Pending | Explicit add/remove-current-location action requires dedicated-vault runtime validation                            |
+| Bookmark action in Contents                 | Pass    | Explicit action added the page-2 bookmark, switched to remove state, listed the 25% location, and removed it cleanly |
 | Highlights survive repagination             | Pass    | Highlight persisted across plugin reload and recovered after nearby source insertion shifted offsets               |
 | Quotes write to each configured destination | Pass    | Shared note, adjacent per-book `Annotations.md`, and configured annotation folder all passed                       |
-| Export all highlights                       | Pending | Separate managed collection note and repeated refresh require dedicated-vault runtime validation                   |
-| Export all quotes                           | Pending | Separate managed collection note and repeated refresh require dedicated-vault runtime validation                   |
+| Export all highlights                       | Pass    | Created one managed highlights note, opened it, and refreshed the same file from both command and settings button   |
+| Export all quotes                           | Pass    | Created one separate managed quotes note, opened it, and refreshed the same file without duplicate snapshots       |
 | Quote reopens source near passage           | Pass    | Generated `obsidian://books-open` link reopened the saved book/chapter/fraction                                    |
 | Source Markdown unchanged by default        | Pass    | Highlight and quote capture left the source chapter free of injected markers                                       |
