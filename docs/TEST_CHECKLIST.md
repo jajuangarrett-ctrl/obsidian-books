@@ -12,7 +12,7 @@ using the dedicated `obsidian-books-test` vault.
 | ----------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Format check      | Pass   | `npm run format:check`                                                                                                                                                                               |
 | ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                                                                                 |
-| Unit tests        | Pass   | 29 tests across pagination geometry, translation, normalized positions, migration, book discovery helpers, bookmarks, text-anchor recovery, quote and export formatting, and fallback classification |
+| Unit tests        | Pass   | 30 tests across pagination geometry, touch-swipe intent, translation, normalized positions, migration, book discovery helpers, bookmarks, text-anchor recovery, quote and export formatting, and fallback classification |
 | Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                                                                            |
 | Production bundle | Pass   | esbuild produces `main.js`                                                                                                                                                                           |
 | GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                                                                         |
@@ -65,6 +65,7 @@ using the dedicated `obsidian-books-test` vault.
 | Workflow                                                   | Status                   | Notes                                                                            |
 | ---------------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------- |
 | Swipe page turns                                           | Pass                     | Synthetic renderer touch swipe advanced one page                                 |
+| Touch-swiped page remains centered                         | Pending                  | Stable-frame touch behavior requires a new synthetic swipe runtime pass           |
 | Text selection does not turn a page                        | Pass                     | Pointer selection enabled highlight/quote controls without changing the page     |
 | Links and checkboxes remain interactive                    | Pass                     | Checkbox toggled and both interaction types were excluded from page turning      |
 | Embedded horizontal/vertical scrolling wins over page turn | Pass                     | Synthetic swipe beginning in a scrollable child did not paginate                 |

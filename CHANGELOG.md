@@ -17,6 +17,12 @@ All notable changes to Obsidian Books will be documented in this file.
 - Automated coverage for separated collections, deterministic grouping,
   traceable metadata, managed-file detection, and collision-safe paths.
 
+### Fixed
+
+- Kept the current page centered during touch movement and snapped the
+  destination page into the same frame, preventing the entire multi-column text
+  strip from flying across iPad and mobile screens during a swipe.
+
 ## [0.1.0] - 2026-07-22
 
 ### Added

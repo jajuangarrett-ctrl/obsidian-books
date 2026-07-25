@@ -26,6 +26,8 @@ foundation.
 - Read in responsive one-page or two-page spreads.
 - Navigate with swipe, tap zones, arrow keys, Page Up/Down, Space, Home/End,
   mouse wheel, or labelled on-screen buttons.
+- Keep touch-swiped pages centered on iPad and mobile while the destination page
+  snaps into the same reading frame.
 - Choose None, Horizontal Slide, or 3D Page Turn transitions. The 3D option is a
   perspective animation over MD Reader's column layout, not a paper curl.
 - Preserve reading position as a percentage when fonts, themes, or window size
@@ -159,7 +161,8 @@ The production bundle is `main.js`; Obsidian also requires `manifest.json` and
 - Removing a quote annotation from Contents does not delete the already-written
   quote block from its Markdown destination; that user-owned text must be edited
   or removed directly.
-- Mobile and iPad behavior has not yet been validated on a physical iPad.
+- The centered touch-swipe fix has been validated through responsive viewport and
+  synthetic touch testing; final physical-iPad verification remains pending.
 
 Oversized chapters automatically switch to a native vertical reading flow:
 
