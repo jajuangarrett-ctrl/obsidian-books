@@ -508,6 +508,26 @@ body.books-immersive.books-chrome-hidden .status-bar {
 	color: var(--text-normal);
 }
 
+.books-current-bookmark-action {
+	width: 100%;
+	min-height: 40px;
+	margin: 0 0 14px;
+	color: var(--text-on-accent);
+	white-space: normal;
+	cursor: pointer;
+	background: var(--interactive-accent);
+}
+
+.books-current-bookmark-action:hover,
+.books-current-bookmark-action:focus-visible {
+	background: var(--interactive-accent-hover);
+}
+
+.books-current-bookmark-action:focus-visible {
+	outline: 3px solid var(--text-normal);
+	outline-offset: 2px;
+}
+
 .books-contents-list {
 	max-height: min(60vh, 560px);
 	padding-left: 2em;

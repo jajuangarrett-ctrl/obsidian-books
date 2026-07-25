@@ -53,6 +53,8 @@ foundation.
   table of contents, and resume saved book/chapter progress.
 - Show estimated minutes left in the active chapter and save persistent
   chapter-aware bookmarks from the reader toolbar.
+- Add or remove a bookmark at the current reading location through an explicit
+  action at the top of the Contents panel.
 - Highlight selected rendered text with resilient text/context anchors while
   leaving source Markdown unchanged.
 - Save selected quotes with source, book, chapter, heading, date, location, and

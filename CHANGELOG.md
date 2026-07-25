@@ -10,6 +10,8 @@ All notable changes to Obsidian Books will be documented in this file.
 
 - Separate **Export all highlights** and **Export all quotes** commands.
 - Matching export buttons in the Quotes and annotations settings section.
+- An explicit add/remove-current-bookmark action at the top of the Contents
+  panel, making bookmark capture discoverable on iPad.
 - Managed Markdown collection notes grouped by book and chapter with source,
   heading, capture date, location, and Obsidian Books reopen links.
 - Non-destructive collision handling that preserves an unrelated note at a

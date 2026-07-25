@@ -86,6 +86,7 @@ using the dedicated `obsidian-books-test` vault.
 | Covers and metadata                         | Pass    | SVG cover, title, author, and chapter count rendered on the shelf                                                  |
 | Table of contents and chapter navigation    | Pass    | Next/previous boundaries and direct Contents jump passed                                                           |
 | Bookmarks                                   | Pass    | Added from the toolbar, exposed in Contents, persisted across vault close/reopen, and restored by chapter/fraction |
+| Bookmark action in Contents                 | Pending | Explicit add/remove-current-location action requires dedicated-vault runtime validation                            |
 | Highlights survive repagination             | Pass    | Highlight persisted across plugin reload and recovered after nearby source insertion shifted offsets               |
 | Quotes write to each configured destination | Pass    | Shared note, adjacent per-book `Annotations.md`, and configured annotation folder all passed                       |
 | Export all highlights                       | Pending | Separate managed collection note and repeated refresh require dedicated-vault runtime validation                   |

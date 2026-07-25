@@ -11,6 +11,8 @@ export class BookContentsModal extends Modal {
 		private readonly activeChapterPath: string,
 		private readonly bookmarks: readonly ReadingBookmark[],
 		private readonly annotations: readonly ReadingAnnotation[],
+		private readonly currentLocationBookmarked: boolean,
+		private readonly onToggleCurrentBookmark: () => void,
 		private readonly onChoose: (chapterPath: string, fraction: number) => void,
 		private readonly onRemoveBookmark: (id: string) => void,
 		private readonly onRemoveAnnotation: (id: string) => void,
@@ -26,6 +28,19 @@ export class BookContentsModal extends Modal {
 		summary.createDiv({
 			cls: 'books-contents-count',
 			text: chapterCount(this.book.chapters.length),
+		});
+
+		const currentBookmarkAction = this.contentEl.createEl('button', {
+			cls: 'books-current-bookmark-action',
+			text: t(this.currentLocationBookmarked ? 'removeBookmarkHere' : 'addBookmarkHere'),
+			attr: {
+				type: 'button',
+				'aria-pressed': String(this.currentLocationBookmarked),
+			},
+		});
+		currentBookmarkAction.addEventListener('click', () => {
+			this.close();
+			this.onToggleCurrentBookmark();
 		});
 
 		const list = this.contentEl.createEl('ol', { cls: 'books-contents-list' });
