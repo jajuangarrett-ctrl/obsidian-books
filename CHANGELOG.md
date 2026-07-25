@@ -4,6 +4,25 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-25
+
+### Added
+
+- A persistent highlight mode that previews and automatically saves a text range
+  dragged with a finger, Apple Pencil, or mouse.
+- An accessible pressed state, active marker styling, and Escape-to-exit behavior
+  for the highlight-mode toolbar control.
+- Automated coverage for touch, pen, and mouse marker input, deliberate-drag
+  detection, and page-gesture exclusion.
+
+### Fixed
+
+- Prevented horizontal pagination from claiming a gesture while native text
+  selection is active.
+- Cleared the browser selection before wrapping saved text and restored the
+  current page or vertical scroll fraction afterward, preventing annotation
+  capture from jumping back to the beginning.
+
 ## [0.2.0] - 2026-07-24
 
 ### Added

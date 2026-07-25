@@ -7,18 +7,21 @@ import {
 } from '../src/reader/highlight-gesture';
 
 describe('direct highlight gestures', () => {
-	it.each(['touch', 'pen', 'mouse'])('accepts a primary %s drag over chapter text', (pointerType) => {
-		expect(
-			canStartHighlightGesture({
-				enabled: true,
-				isPrimary: true,
-				button: 0,
-				pointerType,
-				insideContent: true,
-				interactive: false,
-			}),
-		).toBe(true);
-	});
+	it.each(['touch', 'pen', 'mouse'])(
+		'accepts a primary %s drag over chapter text',
+		(pointerType) => {
+			expect(
+				canStartHighlightGesture({
+					enabled: true,
+					isPrimary: true,
+					button: 0,
+					pointerType,
+					insideContent: true,
+					interactive: false,
+				}),
+			).toBe(true);
+		},
+	);
 
 	it('rejects gestures outside highlightable chapter text', () => {
 		const base = {

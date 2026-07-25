@@ -57,6 +57,9 @@ foundation.
   action at the top of the Contents panel.
 - Highlight selected rendered text with resilient text/context anchors while
   leaving source Markdown unchanged.
+- Turn on highlight mode, then drag directly across text with a finger, Apple
+  Pencil, or mouse to preview and save a highlight on lift without changing the
+  current page.
 - Save selected quotes with source, book, chapter, heading, date, location, and
   an `obsidian://` reopen link to a shared note, a per-book note, or a configured
   annotation folder.
@@ -96,12 +99,21 @@ With a Markdown note active, use any of these:
 
 ## Highlights and quotes
 
-Select text in the rendered chapter, then use the highlight or quote button in
-the reader toolbar. Highlights and their text/context anchors live in plugin
-data; Obsidian Books does not insert markup into source chapters. Quotes can be
-written to one shared note, an `Annotations.md` beside each folder book, or one
-note per book in a configurable folder. The generated Markdown remains ordinary,
-editable vault content.
+Use either highlighting workflow:
+
+- Select text normally, then choose the highlight button.
+- Choose the highlight button with no selection to turn on highlight mode. Drag
+  directly across text with a finger, Apple Pencil, or mouse; the selected range
+  previews in yellow and saves automatically when you lift. The mode stays on
+  for repeated highlights until you choose the button again or press Escape.
+
+Native text selection and direct highlight gestures take priority over page
+swiping, and saving a highlight preserves the current page or vertical scroll
+location. Highlights and their text/context anchors live in plugin data;
+Obsidian Books does not insert markup into source chapters. Quotes can be written
+to one shared note, an `Annotations.md` beside each folder book, or one note per
+book in a configurable folder. The generated Markdown remains ordinary, editable
+vault content.
 
 Run **Export all highlights** or **Export all quotes** from the command palette,
 or use the matching buttons under **Settings → Obsidian Books → Quotes and

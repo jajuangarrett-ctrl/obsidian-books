@@ -1,6 +1,6 @@
 # Test checklist and results
 
-Last updated: 2026-07-24
+Last updated: 2026-07-25
 
 Statuses: **Pass**, **Fail**, **Pending**, or **Physical device required**. Unless
 noted otherwise, manual results below were recorded in Obsidian 1.12.7 on macOS
@@ -8,14 +8,14 @@ using the dedicated `obsidian-books-test` vault.
 
 ## Automated validation
 
-| Check             | Status | Current evidence                                                                                                                                                                                                         |
-| ----------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Format check      | Pass   | `npm run format:check`                                                                                                                                                                                                   |
-| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                                                                                                     |
-| Unit tests        | Pass   | 30 tests across pagination geometry, touch-swipe intent, translation, normalized positions, migration, book discovery helpers, bookmarks, text-anchor recovery, quote and export formatting, and fallback classification |
-| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                                                                                                |
-| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                                                                                               |
-| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                                                                                             |
+| Check             | Status | Current evidence                                                                                                                                                                                                                                 |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Format check      | Pass   | `npm run format:check`                                                                                                                                                                                                                           |
+| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                                                                                                                             |
+| Unit tests        | Pass   | 36 tests across pagination geometry, touch/pen/mouse highlight and swipe intent, translation, normalized positions, migration, book discovery helpers, bookmarks, text-anchor recovery, quote and export formatting, and fallback classification |
+| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                                                                                                                        |
+| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                                                                                                                       |
+| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                                                                                                                     |
 
 ## Desktop reader
 
@@ -66,7 +66,9 @@ using the dedicated `obsidian-books-test` vault.
 | ---------------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | Swipe page turns                                           | Pass                     | Synthetic renderer touch swipe advanced one page                                                                                        |
 | Touch-swiped page remains centered                         | Pass                     | At a 1027px iPad-like viewport, both swipe directions held the transform stable during movement, snapped one page, and returned exactly |
-| Text selection does not turn a page                        | Pass                     | Pointer selection enabled highlight/quote controls without changing the page                                                            |
+| Text selection does not turn a page                        | Pass                     | Native pointer selection enabled highlight/quote controls and saved a highlight while remaining on page 2 of 5                          |
+| Direct drag-to-highlight mode                              | Pass                     | Active marker mode saved forward and reverse mouse drags on lift, remained active for repeated highlights, and stayed on page 2 of 5    |
+| Finger and Apple Pencil marker input                       | Physical device required | Pointer routing accepts and tests both `touch` and `pen`; final physical-device feel and Pencil precision remain to be confirmed        |
 | Links and checkboxes remain interactive                    | Pass                     | Checkbox toggled and both interaction types were excluded from page turning                                                             |
 | Embedded horizontal/vertical scrolling wins over page turn | Pass                     | Synthetic swipe beginning in a scrollable child did not paginate                                                                        |
 | Operating-system edge gesture remains available            | Pass                     | Synthetic gesture beginning at the left OS edge did not paginate                                                                        |

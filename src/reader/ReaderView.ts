@@ -989,10 +989,7 @@ export class ReaderView extends ItemView {
 		let dragged = false;
 
 		const reset = (clearSelection: boolean): void => {
-			if (
-				pointerId !== null &&
-				this.viewport.hasPointerCapture?.(pointerId)
-			) {
+			if (pointerId !== null && this.viewport.hasPointerCapture?.(pointerId)) {
 				this.viewport.releasePointerCapture(pointerId);
 			}
 			pointerId = null;
@@ -1042,11 +1039,7 @@ export class ReaderView extends ItemView {
 			this.viewport,
 			'pointermove',
 			(event) => {
-				if (
-					pointerId !== event.pointerId ||
-					!startBoundary ||
-					!startPoint
-				) {
+				if (pointerId !== event.pointerId || !startBoundary || !startPoint) {
 					return;
 				}
 				event.preventDefault();
@@ -1112,10 +1105,7 @@ export class ReaderView extends ItemView {
 		);
 	}
 
-	private saveSelection(
-		kind: 'highlight' | 'quote',
-		explicitCapture?: SelectionCapture,
-	): void {
+	private saveSelection(kind: 'highlight' | 'quote', explicitCapture?: SelectionCapture): void {
 		const capture = explicitCapture ?? this.selectionCapture ?? this.captureSelection();
 		if (!capture || !this.file || !this.book) {
 			new Notice(t('selectTextFirst'));
@@ -1511,10 +1501,7 @@ export class ReaderView extends ItemView {
 		this.registerDomEvent(this.viewport, 'click', (event) => {
 			if (this.openInternalLink(event)) return;
 			if (this.lastTouchAt && Date.now() - this.lastTouchAt < 700) return;
-			if (
-				this.lastHighlightGestureAt &&
-				Date.now() - this.lastHighlightGestureAt < 700
-			) {
+			if (this.lastHighlightGestureAt && Date.now() - this.lastHighlightGestureAt < 700) {
 				return;
 			}
 			if (
