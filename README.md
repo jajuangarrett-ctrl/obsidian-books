@@ -45,6 +45,8 @@ foundation.
   into the Obsidian Books plugin folder.
 - Discover recently read or explicitly marked single-note books in a searchable
   bookshelf.
+- Keep bookshelf cards, two-line titles, metadata, and progress bars inside
+  their responsive grid columns on iPad and narrow screens.
 - Discover folder books from `Book.md`, including title, author, cover, declared
   chapter order, and numeric-aware fallback ordering.
 - Render only the active chapter, continue across chapter boundaries, open a
@@ -162,7 +164,8 @@ The production bundle is `main.js`; Obsidian also requires `manifest.json` and
   quote block from its Markdown destination; that user-owned text must be edited
   or removed directly.
 - The centered touch-swipe fix has been validated through responsive viewport and
-  synthetic touch testing; final physical-iPad verification remains pending.
+  synthetic touch testing, and the bookshelf overflow fix was based on a physical
+  iPad screenshot; final on-device verification of both fixes remains pending.
 
 Oversized chapters automatically switch to a native vertical reading flow:
 

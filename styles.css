@@ -570,8 +570,12 @@ body.books-immersive.books-chrome-hidden .status-bar {
 }
 
 .books-shelf-view {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
 	height: 100%;
 	padding: clamp(18px, 4vw, 44px);
+	overflow-x: hidden;
 	overflow-y: auto;
 	background: var(--background-primary);
 }
@@ -602,8 +606,10 @@ body.books-immersive.books-chrome-hidden .status-bar {
 
 .books-shelf-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
 	gap: clamp(18px, 3vw, 30px);
+	width: 100%;
+	min-width: 0;
 	max-width: 1200px;
 	margin: 0 auto;
 }
@@ -612,8 +618,13 @@ body.books-immersive.books-chrome-hidden .status-bar {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
 	height: auto;
 	padding: 0;
+	overflow: hidden;
 	color: var(--text-normal);
 	text-align: left;
 	white-space: normal;
@@ -639,6 +650,8 @@ body.books-immersive.books-chrome-hidden .status-bar {
 .books-shelf-cover {
 	position: relative;
 	width: 100%;
+	min-width: 0;
+	max-width: 100%;
 	flex: none;
 	aspect-ratio: 2 / 3;
 	overflow: hidden;
@@ -698,15 +711,31 @@ body.books-immersive.books-chrome-hidden .status-bar {
 	display: flex;
 	flex-direction: column;
 	gap: 3px;
+	width: 100%;
 	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
 }
 
-.books-shelf-title,
 .books-shelf-author,
 .books-shelf-chapters {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.books-shelf-title {
+	display: -webkit-box;
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+	min-height: 2.5em;
+	overflow: hidden;
+	line-height: 1.25;
+	overflow-wrap: anywhere;
+	white-space: normal;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
 }
 
 .books-shelf-author,
@@ -716,7 +745,11 @@ body.books-immersive.books-chrome-hidden .status-bar {
 }
 
 .books-shelf-progress {
+	display: block;
+	box-sizing: border-box;
 	width: 100%;
+	min-width: 0;
+	max-width: 100%;
 	height: 4px;
 	margin-top: 6px;
 	accent-color: var(--interactive-accent);

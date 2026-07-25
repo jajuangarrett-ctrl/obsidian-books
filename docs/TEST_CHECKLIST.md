@@ -73,6 +73,7 @@ using the dedicated `obsidian-books-test` vault.
 | Obsidian sidebars remain usable                            | Pass                     | Sidebar toggle worked and reader reflowed without losing its normalized position |
 | Mobile portrait and landscape                              | Pass                     | Desktop viewport simulation passed; physical mobile remains separate below       |
 | iPad single/two-page layouts                               | Pass                     | Narrow single-page and wide two-page viewport simulations passed                 |
+| iPad bookshelf cards and long titles                       | Pending                  | Responsive card constraints require a new narrow-viewport runtime pass           |
 | Physical iPad touch, orientation, and VoiceOver            | Physical device required | Final device availability must be recorded                                       |
 
 ## Books and study tools

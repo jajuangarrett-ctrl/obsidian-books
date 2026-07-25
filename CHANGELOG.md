@@ -22,6 +22,9 @@ All notable changes to Obsidian Books will be documented in this file.
 - Kept the current page centered during touch movement and snapped the
   destination page into the same frame, preventing the entire multi-column text
   strip from flying across iPad and mobile screens during a swipe.
+- Constrained bookshelf cards and progress bars to their responsive grid tracks
+  and clamped long book titles to two wrapped lines so metadata cannot bleed into
+  neighboring cards on iPad.
 
 ## [0.1.0] - 2026-07-22
 
