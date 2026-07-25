@@ -27,6 +27,12 @@ import {
 	swipePageDelta,
 } from './pagination';
 import { verticalFallbackReason, type FallbackBlockMeasurement } from './fallback';
+import {
+	canStartHighlightGesture,
+	hasHighlightDrag,
+	pageGestureAllowed,
+	type GesturePoint,
+} from './highlight-gesture';
 
 export const VIEW_TYPE_READER = 'obsidian-books-reader';
 
@@ -41,6 +47,11 @@ interface SelectionCapture {
 	selectedText: string;
 	heading?: string;
 	fraction: number;
+}
+
+interface DomBoundaryPoint {
+	node: Node;
+	offset: number;
 }
 
 const INTERACTIVE_SELECTOR = [
@@ -97,6 +108,8 @@ export class ReaderView extends ItemView {
 	private progressFill!: HTMLElement;
 	private statusText!: HTMLElement;
 	private selectionCapture: SelectionCapture | null = null;
+	private highlightMode = false;
+	private lastHighlightGestureAt = 0;
 
 	private renderChild: Component | null = null;
 	private resizeObserver: ResizeObserver | null = null;
@@ -173,14 +186,17 @@ export class ReaderView extends ItemView {
 		this.highlightButton = chapterLeading.createEl('button', {
 			cls: 'books-chapter-button books-highlight-button',
 			text: '▰',
-			attr: { type: 'button', 'aria-label': t('highlightSelection') },
+			attr: {
+				type: 'button',
+				'aria-label': t('enableHighlightMode'),
+				'aria-pressed': 'false',
+			},
 		});
 		this.quoteButton = chapterLeading.createEl('button', {
 			cls: 'books-chapter-button books-quote-button',
 			text: '❝',
 			attr: { type: 'button', 'aria-label': t('saveQuote') },
 		});
-		this.highlightButton.disabled = true;
 		this.quoteButton.disabled = true;
 		const chapterLabels = this.chapterBar.createDiv({ cls: 'books-chapter-labels' });
 		this.bookTitleText = chapterLabels.createDiv({ cls: 'books-book-title' });
@@ -247,7 +263,12 @@ export class ReaderView extends ItemView {
 		}
 		this.registerDomEvent(this.highlightButton, 'click', (event) => {
 			event.stopPropagation();
-			this.saveSelection('highlight');
+			const capture = this.selectionCapture ?? this.captureSelection();
+			if (capture) {
+				this.saveSelection('highlight', capture);
+			} else {
+				this.setHighlightMode(!this.highlightMode, true);
+			}
 		});
 		this.registerDomEvent(this.quoteButton, 'click', (event) => {
 			event.stopPropagation();
@@ -268,12 +289,14 @@ export class ReaderView extends ItemView {
 
 		this.setupInput();
 		this.setupSelectionCapture();
+		this.setupHighlightGesture();
 		this.setupRepagination();
 		this.applySettings();
 		if (this.file) await this.renderFile();
 	}
 
 	public async onClose(): Promise<void> {
+		this.setHighlightMode(false);
 		this.popScope();
 		this.resizeObserver?.disconnect();
 		this.resizeObserver = null;
