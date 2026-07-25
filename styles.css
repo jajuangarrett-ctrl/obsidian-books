@@ -658,6 +658,18 @@ body.books-immersive.books-chrome-hidden .status-bar {
 .books-shelf-card {
 	display: flex;
 	flex-direction: column;
+	gap: 10px;
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+	height: auto;
+	padding: 0;
+}
+
+.books-shelf-open {
+	display: flex;
+	flex-direction: column;
 	gap: 12px;
 	box-sizing: border-box;
 	width: 100%;
@@ -677,15 +689,44 @@ body.books-immersive.books-chrome-hidden .status-bar {
 	box-shadow: none;
 }
 
-.books-shelf-card:hover,
-.books-shelf-card:focus-visible {
+.books-shelf-open:hover,
+.books-shelf-open:focus-visible {
 	background: transparent;
 	box-shadow: none;
 }
 
-.books-shelf-card:focus-visible {
+.books-shelf-open:focus-visible {
 	outline: 3px solid var(--interactive-accent);
 	outline-offset: 5px;
+}
+
+.books-shelf-remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-width: 0;
+	min-height: 38px;
+	padding: 7px 10px;
+	font-size: 0.82em;
+	color: var(--text-muted);
+	white-space: normal;
+	cursor: pointer;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+}
+
+.books-shelf-remove:hover,
+.books-shelf-remove:focus-visible {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+	border-color: var(--background-modifier-border-hover);
+}
+
+.books-shelf-remove:focus-visible {
+	outline: 3px solid var(--interactive-accent);
+	outline-offset: 2px;
 }
 
 .books-shelf-cover {
@@ -705,7 +746,7 @@ body.books-immersive.books-chrome-hidden .status-bar {
 		box-shadow 160ms ease;
 }
 
-.books-shelf-card:hover .books-shelf-cover {
+.books-shelf-open:hover .books-shelf-cover {
 	box-shadow: var(--shadow-l);
 	transform: translateY(-3px);
 }
