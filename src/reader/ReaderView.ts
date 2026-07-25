@@ -935,7 +935,7 @@ export class ReaderView extends ItemView {
 	}
 
 	private caretBoundaryAt(clientX: number, clientY: number): DomBoundaryPoint | null {
-		const document = this.contentEl.ownerDocument as Document & {
+		const document = this.contentEl.ownerDocument as unknown as {
 			caretPositionFromPoint?: (
 				x: number,
 				y: number,
