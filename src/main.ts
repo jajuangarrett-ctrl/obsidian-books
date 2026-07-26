@@ -304,6 +304,16 @@ export default class ObsidianBooksPlugin extends Plugin {
 		void this.saveAll();
 	}
 
+	public replaceHighlight(annotation: ReadingAnnotation): boolean {
+		const index = this.annotations.findIndex(
+			(candidate) => candidate.id === annotation.id && candidate.kind === 'highlight',
+		);
+		if (index < 0 || annotation.kind !== 'highlight') return false;
+		this.annotations[index] = annotation;
+		void this.saveAll();
+		return true;
+	}
+
 	public async addQuote(book: BookRecord, annotation: ReadingAnnotation): Promise<void> {
 		const destinationPath = this.quoteDestinationPath(book);
 		await this.ensureParentFolder(destinationPath);

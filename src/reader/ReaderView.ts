@@ -28,8 +28,10 @@ import {
 } from './pagination';
 import { verticalFallbackReason, type FallbackBlockMeasurement } from './fallback';
 import {
+	canContinueHighlight,
 	canStartHighlightGesture,
 	hasHighlightDrag,
+	mergeHighlightOffsets,
 	pageGestureAllowed,
 	type GesturePoint,
 } from './highlight-gesture';
@@ -107,9 +109,16 @@ export class ReaderView extends ItemView {
 	private nextButton!: HTMLButtonElement;
 	private progressFill!: HTMLElement;
 	private statusText!: HTMLElement;
+	private statusBar!: HTMLElement;
+	private highlightActions!: HTMLElement;
+	private highlightActionMessage!: HTMLElement;
+	private continueHighlightButton!: HTMLButtonElement;
+	private finishHighlightButton!: HTMLButtonElement;
 	private selectionCapture: SelectionCapture | null = null;
 	private highlightMode = false;
 	private lastHighlightGestureAt = 0;
+	private highlightActionAnnotationId: string | null = null;
+	private continuingHighlightId: string | null = null;
 
 	private renderChild: Component | null = null;
 	private resizeObserver: ResizeObserver | null = null;
@@ -232,15 +241,35 @@ export class ReaderView extends ItemView {
 		});
 		this.nextButton.setText('›');
 
-		const statusBar = this.viewport.createDiv({ cls: 'books-statusbar books-ui' });
-		statusBar.setAttribute('role', 'status');
-		statusBar.setAttribute('aria-live', 'polite');
-		statusBar.setAttribute('aria-atomic', 'true');
-		const progress = statusBar.createDiv({ cls: 'books-progress' });
+		this.statusBar = this.viewport.createDiv({ cls: 'books-statusbar books-ui' });
+		this.statusBar.setAttribute('role', 'status');
+		this.statusBar.setAttribute('aria-live', 'polite');
+		this.statusBar.setAttribute('aria-atomic', 'true');
+		const progress = this.statusBar.createDiv({ cls: 'books-progress' });
 		progress.setAttribute('role', 'progressbar');
 		progress.setAttribute('aria-valuemin', '1');
 		this.progressFill = progress.createDiv({ cls: 'books-progress-fill' });
-		this.statusText = statusBar.createDiv({ cls: 'books-status-text', text: pageStatus(1, 1) });
+		this.statusText = this.statusBar.createDiv({
+			cls: 'books-status-text',
+			text: pageStatus(1, 1),
+		});
+		this.highlightActions = this.statusBar.createDiv({
+			cls: 'books-highlight-actions',
+			attr: { hidden: '' },
+		});
+		this.highlightActionMessage = this.highlightActions.createDiv({
+			cls: 'books-highlight-action-message',
+		});
+		this.continueHighlightButton = this.highlightActions.createEl('button', {
+			cls: 'books-highlight-action-button mod-cta',
+			text: t('continueHighlightNextPage'),
+			attr: { type: 'button', 'aria-label': t('continueHighlightNextPage') },
+		});
+		this.finishHighlightButton = this.highlightActions.createEl('button', {
+			cls: 'books-highlight-action-button',
+			text: t('finishHighlight'),
+			attr: { type: 'button', 'aria-label': t('finishHighlight') },
+		});
 
 		this.registerDomEvent(this.previousButton, 'click', (event) => {
 			event.stopPropagation();
@@ -273,6 +302,17 @@ export class ReaderView extends ItemView {
 		this.registerDomEvent(this.quoteButton, 'click', (event) => {
 			event.stopPropagation();
 			this.saveSelection('quote');
+		});
+		for (const button of [this.continueHighlightButton, this.finishHighlightButton]) {
+			this.registerDomEvent(button, 'mousedown', (event) => event.preventDefault());
+		}
+		this.registerDomEvent(this.continueHighlightButton, 'click', (event) => {
+			event.stopPropagation();
+			this.continueHighlightOnNextPage();
+		});
+		this.registerDomEvent(this.finishHighlightButton, 'click', (event) => {
+			event.stopPropagation();
+			this.dismissHighlightActions();
 		});
 		this.registerDomEvent(this.previousChapterButton, 'click', (event) => {
 			event.stopPropagation();
@@ -621,12 +661,13 @@ export class ReaderView extends ItemView {
 		this.content.style.transform = `translateX(${translateX}px)`;
 	}
 
-	private goTo(requestedPage: number, animate = true): void {
+	private goTo(requestedPage: number, animate = true, preserveHighlightActions = false): void {
 		const nextPage = clampPage(requestedPage, this.totalPages);
 		if (nextPage === this.page) {
 			this.updateStatus();
 			return;
 		}
+		if (!preserveHighlightActions) this.dismissHighlightActions();
 
 		const direction = nextPage > this.page ? 'forward' : 'backward';
 		this.page = nextPage;
