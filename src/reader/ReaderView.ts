@@ -294,7 +294,11 @@ export class ReaderView extends ItemView {
 			event.stopPropagation();
 			const capture = this.selectionCapture ?? this.captureSelection();
 			if (capture) {
-				this.saveSelection('highlight', capture);
+				if (this.continuingHighlightId) {
+					this.extendHighlight(capture);
+				} else {
+					this.saveSelection('highlight', capture);
+				}
 			} else {
 				this.setHighlightMode(!this.highlightMode, true);
 			}
