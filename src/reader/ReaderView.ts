@@ -1360,10 +1360,10 @@ export class ReaderView extends ItemView {
 			} else {
 				mark.title = t('saveQuote');
 			}
-				selected.parentNode?.insertBefore(mark, selected);
-				mark.appendChild(selected);
-			}
+			selected.parentNode?.insertBefore(mark, selected);
+			mark.appendChild(selected);
 		}
+	}
 
 	private async changeChapter(direction: -1 | 1, initialFraction: number): Promise<void> {
 		if (!this.book) return;
@@ -1521,26 +1521,24 @@ export class ReaderView extends ItemView {
 		return false;
 	}
 
-		private hasTextSelection(): boolean {
-			return Boolean(this.contentEl.ownerDocument.getSelection()?.toString().trim());
-		}
+	private hasTextSelection(): boolean {
+		return Boolean(this.contentEl.ownerDocument.getSelection()?.toString().trim());
+	}
 
-		private openHighlightActions(target: EventTarget | null): boolean {
-			if (!(target instanceof Element)) return false;
-			const mark = target.closest<HTMLElement>('mark.books-highlight-highlight');
-			const annotationId = mark?.dataset.annotationId;
-			if (!mark || !annotationId || !this.content.contains(mark)) return false;
-			const annotation = this.booksPlugin
-				.getAnnotationsForSource(this.file?.path ?? '')
-				.find(
-					(candidate) => candidate.id === annotationId && candidate.kind === 'highlight',
-				);
-			if (!annotation) return false;
-			this.showHighlightActions(annotation);
-			return true;
-		}
+	private openHighlightActions(target: EventTarget | null): boolean {
+		if (!(target instanceof Element)) return false;
+		const mark = target.closest<HTMLElement>('mark.books-highlight-highlight');
+		const annotationId = mark?.dataset.annotationId;
+		if (!mark || !annotationId || !this.content.contains(mark)) return false;
+		const annotation = this.booksPlugin
+			.getAnnotationsForSource(this.file?.path ?? '')
+			.find((candidate) => candidate.id === annotationId && candidate.kind === 'highlight');
+		if (!annotation) return false;
+		this.showHighlightActions(annotation);
+		return true;
+	}
 
-		private setupInput(): void {
+	private setupInput(): void {
 		const operatingSystemEdge = 20;
 		const claimThreshold = 6;
 		const tapMoveThreshold = 10;
@@ -1673,13 +1671,13 @@ export class ReaderView extends ItemView {
 			passive: true,
 		});
 
-			this.registerDomEvent(this.viewport, 'click', (event) => {
-				if (this.openHighlightActions(event.target)) {
-					event.preventDefault();
-					event.stopPropagation();
-					return;
-				}
-				if (this.openInternalLink(event)) return;
+		this.registerDomEvent(this.viewport, 'click', (event) => {
+			if (this.openHighlightActions(event.target)) {
+				event.preventDefault();
+				event.stopPropagation();
+				return;
+			}
+			if (this.openInternalLink(event)) return;
 			if (this.lastTouchAt && Date.now() - this.lastTouchAt < 700) return;
 			if (this.lastHighlightGestureAt && Date.now() - this.lastHighlightGestureAt < 700) {
 				return;
@@ -1692,14 +1690,14 @@ export class ReaderView extends ItemView {
 			) {
 				return;
 			}
-				this.handleTap(event.clientX);
-			});
-			this.registerDomEvent(this.content, 'keydown', (event) => {
-				if (event.key !== 'Enter' && event.key !== ' ') return;
-				if (!this.openHighlightActions(event.target)) return;
-				event.preventDefault();
-				event.stopPropagation();
-			});
+			this.handleTap(event.clientX);
+		});
+		this.registerDomEvent(this.content, 'keydown', (event) => {
+			if (event.key !== 'Enter' && event.key !== ' ') return;
+			if (!this.openHighlightActions(event.target)) return;
+			event.preventDefault();
+			event.stopPropagation();
+		});
 
 		if (Platform.isDesktop) this.setupWheelInput();
 	}
