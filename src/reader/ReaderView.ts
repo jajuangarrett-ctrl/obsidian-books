@@ -357,6 +357,7 @@ export class ReaderView extends ItemView {
 
 	public async renderFile(): Promise<void> {
 		if (!this.content) return;
+		this.dismissHighlightActions();
 		if (!this.file) {
 			this.content.empty();
 			this.content.createDiv({ cls: 'books-empty', text: t('notFound') });
@@ -951,9 +952,54 @@ export class ReaderView extends ItemView {
 		this.highlightMode = enabled;
 		this.viewport?.toggleClass('books-highlight-mode', enabled);
 		this.updateHighlightButton();
-		if (!enabled) this.clearNativeSelection();
+		if (!enabled) {
+			this.dismissHighlightActions();
+			this.clearNativeSelection();
+		}
 		if (!announce) return;
 		new Notice(t(enabled ? 'highlightModeEnabled' : 'highlightModeDisabled'));
+	}
+
+	private showHighlightActions(annotation: ReadingAnnotation, extended = false): void {
+		if (!this.highlightActions) return;
+		this.highlightActionAnnotationId = annotation.id;
+		this.continuingHighlightId = null;
+		this.highlightActionMessage.setText(
+			t(extended ? 'highlightExtended' : 'highlightSavedForContinuation'),
+		);
+		this.continueHighlightButton.hidden = !canContinueHighlight(
+			this.page,
+			this.totalPages,
+			this.verticalMode,
+		);
+		this.finishHighlightButton.setText(t('finishHighlight'));
+		this.finishHighlightButton.setAttribute('aria-label', t('finishHighlight'));
+		this.highlightActions.hidden = false;
+		this.statusBar?.addClass('has-highlight-actions');
+	}
+
+	private continueHighlightOnNextPage(): void {
+		if (
+			!this.highlightActionAnnotationId ||
+			!canContinueHighlight(this.page, this.totalPages, this.verticalMode)
+		) {
+			return;
+		}
+		this.continuingHighlightId = this.highlightActionAnnotationId;
+		this.clearNativeSelection();
+		this.setHighlightMode(true);
+		this.highlightActionMessage.setText(t('continueHighlightInstruction'));
+		this.continueHighlightButton.hidden = true;
+		this.finishHighlightButton.setText(t('cancelHighlightContinuation'));
+		this.finishHighlightButton.setAttribute('aria-label', t('cancelHighlightContinuation'));
+		this.goTo(this.page + 1, false, true);
+	}
+
+	private dismissHighlightActions(): void {
+		this.highlightActionAnnotationId = null;
+		this.continuingHighlightId = null;
+		if (this.highlightActions) this.highlightActions.hidden = true;
+		this.statusBar?.removeClass('has-highlight-actions');
 	}
 
 	private headingForRange(range: Range): string | undefined {
@@ -1062,10 +1108,11 @@ export class ReaderView extends ItemView {
 					return;
 				}
 				const boundary = this.caretBoundaryAt(event.clientX, event.clientY);
-				if (!boundary) return;
-				event.preventDefault();
-				event.stopPropagation();
-				pointerId = event.pointerId;
+					if (!boundary) return;
+					event.preventDefault();
+					event.stopPropagation();
+					if (!this.continuingHighlightId) this.dismissHighlightActions();
+					pointerId = event.pointerId;
 				startBoundary = boundary;
 				startPoint = { x: event.clientX, y: event.clientY };
 				latestRange = null;
@@ -1116,10 +1163,14 @@ export class ReaderView extends ItemView {
 			if (!capture) {
 				this.clearNativeSelection();
 				return;
-			}
-			this.selectionCapture = capture;
-			this.saveSelection('highlight', capture);
-		};
+				}
+				this.selectionCapture = capture;
+				if (this.continuingHighlightId) {
+					this.extendHighlight(capture);
+				} else {
+					this.saveSelection('highlight', capture);
+				}
+			};
 
 		this.registerDomEvent(this.viewport, 'pointerup', finish, {
 			capture: true,
@@ -1178,6 +1229,7 @@ export class ReaderView extends ItemView {
 			} else {
 				this.applyTransform();
 			}
+			this.showHighlightActions(annotation);
 			new Notice(t('highlightAdded'));
 			return;
 		}
@@ -1201,6 +1253,46 @@ export class ReaderView extends ItemView {
 			});
 	}
 
+	private extendHighlight(capture: SelectionCapture): void {
+		const annotationId = this.continuingHighlightId;
+		const fullText = this.content.textContent ?? '';
+		const existing = annotationId
+			? this.booksPlugin
+					.getAnnotationsForSource(this.file?.path ?? '')
+					.find(
+						(annotation) =>
+							annotation.id === annotationId && annotation.kind === 'highlight',
+					)
+			: undefined;
+		const existingLocation = existing ? locateTextAnchor(fullText, existing.anchor) : undefined;
+		const continuationLocation = locateTextAnchor(fullText, capture.anchor);
+		if (!existing || !existingLocation || !continuationLocation) {
+			this.dismissHighlightActions();
+			this.clearNativeSelection();
+			new Notice(t('selectTextFirst'));
+			return;
+		}
+
+		const merged = mergeHighlightOffsets(existingLocation, continuationLocation);
+		const anchor = createTextAnchor(fullText, merged.start, merged.end);
+		const extended: ReadingAnnotation = {
+			...existing,
+			anchor,
+			selectedText: anchor.exact,
+		};
+		this.clearNativeSelection();
+		this.unwrapAnnotation(existing.id);
+		if (!this.booksPlugin.replaceHighlight(extended)) {
+			this.wrapAnnotation(existing);
+			this.dismissHighlightActions();
+			return;
+		}
+		this.wrapAnnotation(extended);
+		this.applyTransform();
+		this.showHighlightActions(extended, true);
+		new Notice(t('highlightExtended'));
+	}
+
 	private applyStoredHighlights(): void {
 		if (!this.file) return;
 		const annotations = this.booksPlugin
@@ -1212,6 +1304,19 @@ export class ReaderView extends ItemView {
 			.filter((item) => item.location !== undefined)
 			.sort((left, right) => (right.location?.start ?? 0) - (left.location?.start ?? 0));
 		for (const { annotation } of annotations) this.wrapAnnotation(annotation);
+	}
+
+	private unwrapAnnotation(annotationId: string): void {
+		const marks = Array.from(this.content.querySelectorAll<HTMLElement>('.books-highlight')).filter(
+			(mark) => mark.dataset.annotationId === annotationId,
+		);
+		for (const mark of marks) {
+			const parent = mark.parentNode;
+			if (!parent) continue;
+			while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+			parent.removeChild(mark);
+			parent.normalize();
+		}
 	}
 
 	private wrapAnnotation(annotation: ReadingAnnotation): void {

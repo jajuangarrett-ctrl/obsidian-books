@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	canContinueHighlight,
 	canStartHighlightGesture,
 	hasHighlightDrag,
+	mergeHighlightOffsets,
 	pageGestureAllowed,
 } from '../src/reader/highlight-gesture';
 
@@ -49,5 +51,26 @@ describe('direct highlight gestures', () => {
 		expect(pageGestureAllowed(false, false)).toBe(true);
 		expect(pageGestureAllowed(true, false)).toBe(false);
 		expect(pageGestureAllowed(false, true)).toBe(false);
+	});
+
+	it('offers continuation only when another paginated page exists', () => {
+		expect(canContinueHighlight(0, 3, false)).toBe(true);
+		expect(canContinueHighlight(2, 3, false)).toBe(false);
+		expect(canContinueHighlight(0, 3, true)).toBe(false);
+	});
+
+	it('merges separately selected page fragments into one continuous range', () => {
+		expect(
+			mergeHighlightOffsets(
+				{ start: 120, end: 165 },
+				{ start: 166, end: 218 },
+			),
+		).toEqual({ start: 120, end: 218 });
+		expect(
+			mergeHighlightOffsets(
+				{ start: 166, end: 218 },
+				{ start: 165, end: 120 },
+			),
+		).toEqual({ start: 120, end: 218 });
 	});
 });
