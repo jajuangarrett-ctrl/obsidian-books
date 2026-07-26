@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createTextAnchor, locateTextAnchor } from '../src/annotations/anchors';
+import { createTextAnchor, locateTextAnchor, mergeTextAnchors } from '../src/annotations/anchors';
 import { formatQuoteEntry, safeAnnotationFilename } from '../src/annotations/quote-format';
 import type { ReadingAnnotation } from '../src/types';
 
@@ -24,6 +24,29 @@ describe('annotation anchors', () => {
 				endOffset: 12,
 			}),
 		).toBeUndefined();
+	});
+
+	it('merges page fragments and their intervening text into one resilient anchor', () => {
+		const text =
+			'The first page ends with silence as a temporary gap between feeling and action. Boundaries continue on page two.';
+		const existingStart = text.indexOf('silence');
+		const continuationStart = text.indexOf('Boundaries');
+		const merged = mergeTextAnchors(
+			text,
+			createTextAnchor(text, existingStart, text.indexOf('action.') + 'action.'.length),
+			createTextAnchor(
+				text,
+				continuationStart,
+				continuationStart + 'Boundaries continue'.length,
+			),
+		);
+
+		expect(merged?.exact).toBe(
+			'silence as a temporary gap between feeling and action. Boundaries continue',
+		);
+		expect(locateTextAnchor(`A new preface. ${text}`, merged!)?.start).toBe(
+			`A new preface. ${text}`.indexOf('silence'),
+		);
 	});
 });
 

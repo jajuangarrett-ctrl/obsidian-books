@@ -56,3 +56,28 @@ export function locateTextAnchor(text: string, anchor: TextAnchor): LocatedTextA
 
 	return candidates.sort((left, right) => right.score - left.score)[0];
 }
+
+export function mergeTextAnchors(
+	text: string,
+	existing: TextAnchor,
+	continuation: TextAnchor,
+): TextAnchor | undefined {
+	const existingLocation = locateTextAnchor(text, existing);
+	const continuationLocation = locateTextAnchor(text, continuation);
+	if (!existingLocation || !continuationLocation) return undefined;
+	return createTextAnchor(
+		text,
+		Math.min(
+			existingLocation.start,
+			existingLocation.end,
+			continuationLocation.start,
+			continuationLocation.end,
+		),
+		Math.max(
+			existingLocation.start,
+			existingLocation.end,
+			continuationLocation.start,
+			continuationLocation.end,
+		),
+	);
+}

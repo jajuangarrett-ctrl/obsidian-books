@@ -62,6 +62,8 @@ foundation.
 - Turn on highlight mode, then drag directly across text with a finger, Apple
   Pencil, or mouse to preview and save a highlight on lift without changing the
   current page.
+- Continue a saved highlight onto the next page and merge both page fragments,
+  including the intervening text, into one resilient annotation.
 - Save selected quotes with source, book, chapter, heading, date, location, and
   an `obsidian://` reopen link to a shared note, a per-book note, or a configured
   annotation folder.
@@ -126,6 +128,19 @@ Obsidian Books does not insert markup into source chapters. Quotes can be writte
 to one shared note, an `Annotations.md` beside each folder book, or one note per
 book in a configurable folder. The generated Markdown remains ordinary, editable
 vault content.
+
+To highlight a passage split across pages:
+
+1. Highlight the visible portion on the current page.
+2. Choose **Continue highlight on next page** in the bottom action bar.
+3. Drag across the remaining text after the reader advances.
+4. Repeat **Continue highlight on next page** if the passage spans another page,
+   or choose **Done**.
+
+Obsidian Books replaces the saved fragment with one continuous highlight. Choose
+**Cancel** while continuation is active to keep the portion already saved
+without adding the next page. You can also choose an existing highlight in the
+reader to reopen these actions later.
 
 Run **Export all highlights** or **Export all quotes** from the command palette,
 or use the matching buttons under **Settings → Obsidian Books → Quotes and

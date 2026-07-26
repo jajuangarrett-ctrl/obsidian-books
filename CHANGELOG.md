@@ -4,6 +4,26 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-07-25
+
+### Added
+
+- A touch-friendly **Continue highlight on next page** action after saving a
+  paginated highlight.
+- Repeatable continuation across multiple pages, with **Done** and
+  continuation-only **Cancel** actions.
+- Pointer and keyboard access to reopen continuation actions from an existing
+  saved highlight.
+- Automated coverage for page eligibility, reversed selections, and continuous
+  text-anchor reconstruction across page fragments.
+
+### Changed
+
+- Replaced separate page fragments with one continuous, resilient annotation so
+  saved highlight exports and reopen links retain the full passage.
+- Kept the first page fragment saved immediately so cancelling continuation
+  never discards completed highlighting work.
+
 ## [0.2.2] - 2026-07-25
 
 ### Added

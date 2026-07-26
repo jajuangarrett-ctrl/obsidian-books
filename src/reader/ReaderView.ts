@@ -12,7 +12,7 @@ import {
 } from 'obsidian';
 
 import type ObsidianBooksPlugin from '../main';
-import { createTextAnchor, locateTextAnchor } from '../annotations/anchors';
+import { createTextAnchor, locateTextAnchor, mergeTextAnchors } from '../annotations/anchors';
 import { BookContentsModal } from '../books/BookContentsModal';
 import type { BookRecord } from '../books/domain';
 import { chapterStatus, minutesLeft, pageStatus, scrollStatus, t } from '../i18n';
@@ -31,7 +31,6 @@ import {
 	canContinueHighlight,
 	canStartHighlightGesture,
 	hasHighlightDrag,
-	mergeHighlightOffsets,
 	pageGestureAllowed,
 	type GesturePoint,
 } from './highlight-gesture';
@@ -1268,17 +1267,16 @@ export class ReaderView extends ItemView {
 							annotation.id === annotationId && annotation.kind === 'highlight',
 					)
 			: undefined;
-		const existingLocation = existing ? locateTextAnchor(fullText, existing.anchor) : undefined;
-		const continuationLocation = locateTextAnchor(fullText, capture.anchor);
-		if (!existing || !existingLocation || !continuationLocation) {
+		const anchor = existing
+			? mergeTextAnchors(fullText, existing.anchor, capture.anchor)
+			: undefined;
+		if (!existing || !anchor) {
 			this.dismissHighlightActions();
 			this.clearNativeSelection();
 			new Notice(t('selectTextFirst'));
 			return;
 		}
 
-		const merged = mergeHighlightOffsets(existingLocation, continuationLocation);
-		const anchor = createTextAnchor(fullText, merged.start, merged.end);
 		const extended: ReadingAnnotation = {
 			...existing,
 			anchor,
