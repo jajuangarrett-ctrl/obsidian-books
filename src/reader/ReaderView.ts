@@ -118,6 +118,7 @@ export class ReaderView extends ItemView {
 	private lastHighlightGestureAt = 0;
 	private highlightActionAnnotationId: string | null = null;
 	private continuingHighlightId: string | null = null;
+	private highlightModeBeforeContinuation: boolean | null = null;
 
 	private renderChild: Component | null = null;
 	private resizeObserver: ResizeObserver | null = null;
@@ -241,9 +242,6 @@ export class ReaderView extends ItemView {
 		this.nextButton.setText('›');
 
 		this.statusBar = this.viewport.createDiv({ cls: 'books-statusbar books-ui' });
-		this.statusBar.setAttribute('role', 'status');
-		this.statusBar.setAttribute('aria-live', 'polite');
-		this.statusBar.setAttribute('aria-atomic', 'true');
 		const progress = this.statusBar.createDiv({ cls: 'books-progress' });
 		progress.setAttribute('role', 'progressbar');
 		progress.setAttribute('aria-valuemin', '1');
@@ -252,6 +250,9 @@ export class ReaderView extends ItemView {
 			cls: 'books-status-text',
 			text: pageStatus(1, 1),
 		});
+		this.statusText.setAttribute('role', 'status');
+		this.statusText.setAttribute('aria-live', 'polite');
+		this.statusText.setAttribute('aria-atomic', 'true');
 		this.highlightActions = this.statusBar.createDiv({
 			cls: 'books-highlight-actions',
 			attr: { hidden: '' },
@@ -956,7 +957,7 @@ export class ReaderView extends ItemView {
 		this.viewport?.toggleClass('books-highlight-mode', enabled);
 		this.updateHighlightButton();
 		if (!enabled) {
-			this.dismissHighlightActions();
+			this.dismissHighlightActions(false);
 			this.clearNativeSelection();
 		}
 		if (!announce) return;
@@ -967,6 +968,7 @@ export class ReaderView extends ItemView {
 		if (!this.highlightActions) return;
 		this.highlightActionAnnotationId = annotation.id;
 		this.continuingHighlightId = null;
+		if (!extended) this.highlightModeBeforeContinuation = null;
 		this.highlightActionMessage.setText(
 			t(extended ? 'highlightExtended' : 'highlightSavedForContinuation'),
 		);
@@ -988,6 +990,9 @@ export class ReaderView extends ItemView {
 		) {
 			return;
 		}
+		if (this.highlightModeBeforeContinuation === null) {
+			this.highlightModeBeforeContinuation = this.highlightMode;
+		}
 		this.continuingHighlightId = this.highlightActionAnnotationId;
 		this.clearNativeSelection();
 		this.setHighlightMode(true);
@@ -998,11 +1003,23 @@ export class ReaderView extends ItemView {
 		this.goTo(this.page + 1, false, true);
 	}
 
-	private dismissHighlightActions(): void {
+	private dismissHighlightActions(restoreHighlightMode = true): void {
+		const previousHighlightMode = this.highlightModeBeforeContinuation;
 		this.highlightActionAnnotationId = null;
 		this.continuingHighlightId = null;
+		this.highlightModeBeforeContinuation = null;
 		if (this.highlightActions) this.highlightActions.hidden = true;
 		this.statusBar?.removeClass('has-highlight-actions');
+		if (
+			restoreHighlightMode &&
+			previousHighlightMode !== null &&
+			this.highlightMode !== previousHighlightMode
+		) {
+			this.highlightMode = previousHighlightMode;
+			this.viewport?.toggleClass('books-highlight-mode', previousHighlightMode);
+			this.updateHighlightButton();
+			if (!previousHighlightMode) this.clearNativeSelection();
+		}
 	}
 
 	private headingForRange(range: Range): string | undefined {
