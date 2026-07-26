@@ -1108,11 +1108,11 @@ export class ReaderView extends ItemView {
 					return;
 				}
 				const boundary = this.caretBoundaryAt(event.clientX, event.clientY);
-					if (!boundary) return;
-					event.preventDefault();
-					event.stopPropagation();
-					if (!this.continuingHighlightId) this.dismissHighlightActions();
-					pointerId = event.pointerId;
+				if (!boundary) return;
+				event.preventDefault();
+				event.stopPropagation();
+				if (!this.continuingHighlightId) this.dismissHighlightActions();
+				pointerId = event.pointerId;
 				startBoundary = boundary;
 				startPoint = { x: event.clientX, y: event.clientY };
 				latestRange = null;
@@ -1163,14 +1163,14 @@ export class ReaderView extends ItemView {
 			if (!capture) {
 				this.clearNativeSelection();
 				return;
-				}
-				this.selectionCapture = capture;
-				if (this.continuingHighlightId) {
-					this.extendHighlight(capture);
-				} else {
-					this.saveSelection('highlight', capture);
-				}
-			};
+			}
+			this.selectionCapture = capture;
+			if (this.continuingHighlightId) {
+				this.extendHighlight(capture);
+			} else {
+				this.saveSelection('highlight', capture);
+			}
+		};
 
 		this.registerDomEvent(this.viewport, 'pointerup', finish, {
 			capture: true,
@@ -1307,9 +1307,9 @@ export class ReaderView extends ItemView {
 	}
 
 	private unwrapAnnotation(annotationId: string): void {
-		const marks = Array.from(this.content.querySelectorAll<HTMLElement>('.books-highlight')).filter(
-			(mark) => mark.dataset.annotationId === annotationId,
-		);
+		const marks = Array.from(
+			this.content.querySelectorAll<HTMLElement>('.books-highlight'),
+		).filter((mark) => mark.dataset.annotationId === annotationId);
 		for (const mark of marks) {
 			const parent = mark.parentNode;
 			if (!parent) continue;

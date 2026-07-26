@@ -60,17 +60,13 @@ describe('direct highlight gestures', () => {
 	});
 
 	it('merges separately selected page fragments into one continuous range', () => {
-		expect(
-			mergeHighlightOffsets(
-				{ start: 120, end: 165 },
-				{ start: 166, end: 218 },
-			),
-		).toEqual({ start: 120, end: 218 });
-		expect(
-			mergeHighlightOffsets(
-				{ start: 166, end: 218 },
-				{ start: 165, end: 120 },
-			),
-		).toEqual({ start: 120, end: 218 });
+		expect(mergeHighlightOffsets({ start: 120, end: 165 }, { start: 166, end: 218 })).toEqual({
+			start: 120,
+			end: 218,
+		});
+		expect(mergeHighlightOffsets({ start: 166, end: 218 }, { start: 165, end: 120 })).toEqual({
+			start: 120,
+			end: 218,
+		});
 	});
 });
