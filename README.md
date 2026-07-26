@@ -144,7 +144,8 @@ reader to reopen these actions later.
 
 Run **Export all highlights** or **Export all quotes** from the command palette,
 or use the matching buttons under **Settings → Obsidian Books → Quotes and
-annotations**. The plugin creates these separate collection notes:
+annotations**. Use the **Export folder** setting in that same section to choose
+where the managed collections live. The default paths are:
 
 - `Obsidian Books/Exports/All Highlights.md`
 - `Obsidian Books/Exports/All Quotes.md`

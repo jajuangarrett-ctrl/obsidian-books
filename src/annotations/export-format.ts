@@ -74,21 +74,33 @@ export function annotationExportMarker(kind: AnnotationKind): string {
 	return `<!-- obsidian-books-managed-export: ${pluralKind(kind)} -->`;
 }
 
-export function annotationExportPath(kind: AnnotationKind): string {
-	return `${ANNOTATION_EXPORT_FOLDER}/All ${displayKind(kind)}.md`;
+function normalizedExportFolder(folder: string): string {
+	const normalized = folder
+		.trim()
+		.replace(/\\/g, '/')
+		.replace(/^\/+|\/+$/g, '');
+	return normalized || ANNOTATION_EXPORT_FOLDER;
+}
+
+export function annotationExportPath(
+	kind: AnnotationKind,
+	folder = ANNOTATION_EXPORT_FOLDER,
+): string {
+	return `${normalizedExportFolder(folder)}/All ${displayKind(kind)}.md`;
 }
 
 export function timestampedAnnotationExportPath(
 	kind: AnnotationKind,
 	generatedAt: string,
 	suffix = 0,
+	folder = ANNOTATION_EXPORT_FOLDER,
 ): string {
 	const timestamp = generatedAt
 		.replace(/\.\d{3}Z$/, 'Z')
 		.replace(/[:T]/g, '-')
 		.replace(/Z$/, '');
 	const collisionSuffix = suffix > 0 ? ` ${suffix + 1}` : '';
-	return `${ANNOTATION_EXPORT_FOLDER}/All ${displayKind(kind)} ${timestamp}${collisionSuffix}.md`;
+	return `${normalizedExportFolder(folder)}/All ${displayKind(kind)} ${timestamp}${collisionSuffix}.md`;
 }
 
 export function isManagedAnnotationExport(content: string, kind: AnnotationKind): boolean {

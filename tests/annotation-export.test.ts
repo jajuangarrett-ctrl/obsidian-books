@@ -131,5 +131,16 @@ describe('annotation exports', () => {
 		expect(timestampedAnnotationExportPath('quote', '2026-07-24T19:02:03.456Z', 1)).toBe(
 			'Obsidian Books/Exports/All Quotes 2026-07-24-19-02-03 2.md',
 		);
+		expect(annotationExportPath('highlight', '/Artifacts/Obsidian Books/Exports/')).toBe(
+			'Artifacts/Obsidian Books/Exports/All Highlights.md',
+		);
+		expect(
+			timestampedAnnotationExportPath(
+				'quote',
+				'2026-07-24T19:02:03.456Z',
+				0,
+				'Artifacts\\Obsidian Books\\Exports',
+			),
+		).toBe('Artifacts/Obsidian Books/Exports/All Quotes 2026-07-24-19-02-03.md');
 	});
 });

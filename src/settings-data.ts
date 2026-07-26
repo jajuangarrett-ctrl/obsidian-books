@@ -34,6 +34,7 @@ export const DEFAULT_SETTINGS: ReaderSettings = {
 	quoteDestination: 'single-note',
 	quotesNotePath: 'Obsidian Books/Quotes.md',
 	annotationsFolder: 'Obsidian Books/Annotations',
+	exportFolder: 'Obsidian Books/Exports',
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -118,6 +119,7 @@ export function normalizeSettings(value: unknown): ReaderSettings {
 			candidate.annotationsFolder,
 			DEFAULT_SETTINGS.annotationsFolder,
 		),
+		exportFolder: stringSetting(candidate.exportFolder, DEFAULT_SETTINGS.exportFolder),
 	};
 }
 

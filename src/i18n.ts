@@ -64,10 +64,13 @@ const STRINGS = {
 		annotationFolderOption: 'One note per book in a folder',
 		quotesNotePath: 'Quotes note path',
 		annotationsFolder: 'Annotations folder',
+		exportFolder: 'Export folder',
+		exportFolderDescription:
+			'Vault-relative folder for the managed highlights and quotes collection notes.',
 		exportHighlightsDescription:
-			'Write every saved highlight to a managed Markdown note in Obsidian Books/Exports.',
+			'Write every saved highlight to a managed Markdown note in the configured export folder.',
 		exportQuotesDescription:
-			'Write every saved quote to a separate managed Markdown note in Obsidian Books/Exports.',
+			'Write every saved quote to a separate managed Markdown note in the configured export folder.',
 		export: 'Export',
 		noHighlightsToExport: 'There are no highlights to export.',
 		noQuotesToExport: 'There are no quotes to export.',
@@ -191,10 +194,13 @@ const STRINGS = {
 		annotationFolderOption: 'Отдельная заметка для каждой книги в папке',
 		quotesNotePath: 'Путь к заметке цитат',
 		annotationsFolder: 'Папка аннотаций',
+		exportFolder: 'Папка экспорта',
+		exportFolderDescription:
+			'Путь внутри хранилища для управляемых коллекций выделений и цитат.',
 		exportHighlightsDescription:
-			'Записать все сохранённые выделения в управляемую заметку Markdown в Obsidian Books/Exports.',
+			'Записать все сохранённые выделения в управляемую заметку Markdown в настроенной папке экспорта.',
 		exportQuotesDescription:
-			'Записать все сохранённые цитаты в отдельную управляемую заметку Markdown в Obsidian Books/Exports.',
+			'Записать все сохранённые цитаты в отдельную управляемую заметку Markdown в настроенной папке экспорта.',
 		export: 'Экспортировать',
 		noHighlightsToExport: 'Нет выделений для экспорта.',
 		noQuotesToExport: 'Нет цитат для экспорта.',

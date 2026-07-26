@@ -49,7 +49,19 @@ describe('settings migration', () => {
 		});
 
 		expect(migrated.settings.transition).toBe('page-turn');
+		expect(migrated.settings.exportFolder).toBe('Obsidian Books/Exports');
 		expect(migrated.positions['Book.md']?.fraction).toBe(0.25);
+	});
+
+	it('preserves a configured annotation export folder', () => {
+		const migrated = migratePersistedData({
+			settings: {
+				...DEFAULT_SETTINGS,
+				exportFolder: 'Artifacts/Obsidian Books/Exports',
+			},
+		});
+
+		expect(migrated.settings.exportFolder).toBe('Artifacts/Obsidian Books/Exports');
 	});
 
 	it('loads book progress and clamps its chapter fraction', () => {

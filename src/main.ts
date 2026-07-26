@@ -420,7 +420,7 @@ export default class ObsidianBooksPlugin extends Plugin {
 				this.app.vault.getName(),
 				generatedAt,
 			);
-			let path = normalizePath(annotationExportPath(kind));
+			let path = normalizePath(annotationExportPath(kind, this.settings.exportFolder));
 			await this.ensureParentFolder(path);
 			const existing = this.app.vault.getAbstractFileByPath(path);
 			let exportedFile: TFile;
@@ -454,10 +454,19 @@ export default class ObsidianBooksPlugin extends Plugin {
 
 	private availableTimestampedExportPath(kind: AnnotationKind, generatedAt: string): string {
 		let suffix = 0;
-		let path = normalizePath(timestampedAnnotationExportPath(kind, generatedAt, suffix));
+		let path = normalizePath(
+			timestampedAnnotationExportPath(kind, generatedAt, suffix, this.settings.exportFolder),
+		);
 		while (this.app.vault.getAbstractFileByPath(path)) {
 			suffix += 1;
-			path = normalizePath(timestampedAnnotationExportPath(kind, generatedAt, suffix));
+			path = normalizePath(
+				timestampedAnnotationExportPath(
+					kind,
+					generatedAt,
+					suffix,
+					this.settings.exportFolder,
+				),
+			);
 		}
 		return path;
 	}

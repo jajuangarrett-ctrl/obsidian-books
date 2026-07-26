@@ -24,6 +24,7 @@ export interface ReaderSettings {
 	quoteDestination: QuoteDestination;
 	quotesNotePath: string;
 	annotationsFolder: string;
+	exportFolder: string;
 }
 
 export interface ReadingPosition {

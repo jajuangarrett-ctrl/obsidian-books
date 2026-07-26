@@ -233,6 +233,16 @@ export class ReaderSettingTab extends PluginSettingTab {
 		);
 
 		new Setting(containerEl)
+			.setName(t('exportFolder'))
+			.setDesc(t('exportFolderDescription'))
+			.addText((text) =>
+				text.setValue(this.booksPlugin.settings.exportFolder).onChange(async (value) => {
+					this.booksPlugin.settings.exportFolder = value;
+					await this.booksPlugin.saveAll();
+				}),
+			);
+
+		new Setting(containerEl)
 			.setName(t('commandExportHighlights'))
 			.setDesc(t('exportHighlightsDescription'))
 			.addButton((button) =>

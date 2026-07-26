@@ -4,6 +4,19 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-07-26
+
+### Added
+
+- A vault-relative **Export folder** setting for placing the managed highlights
+  and quotes collection notes wherever they belong in the vault.
+
+### Changed
+
+- Bulk export commands now honor the configured export folder while preserving
+  the existing `Obsidian Books/Exports` location as the backward-compatible
+  default.
+
 ## [0.2.3] - 2026-07-25
 
 ### Added

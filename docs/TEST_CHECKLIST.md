@@ -1,6 +1,6 @@
 # Test checklist and results
 
-Last updated: 2026-07-25
+Last updated: 2026-07-26
 
 Statuses: **Pass**, **Fail**, **Pending**, or **Physical device required**. Unless
 noted otherwise, manual results below were recorded in Obsidian 1.12.7 on macOS
@@ -8,14 +8,14 @@ using the dedicated `obsidian-books-test` vault.
 
 ## Automated validation
 
-| Check             | Status | Current evidence                                                                                                                                                                                                                                                                                          |
-| ----------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Format check      | Pass   | `npm run format:check`                                                                                                                                                                                                                                                                                    |
-| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                                                                                                                                                                                      |
-| Unit tests        | Pass   | 41 tests across pagination geometry, touch/pen/mouse highlight and swipe intent, cross-page highlight continuation, translation, normalized positions, migration, bookshelf visibility, book discovery helpers, bookmarks, text-anchor recovery, quote and export formatting, and fallback classification |
-| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                                                                                                                                                                                 |
-| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                                                                                                                                                                                |
-| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                                                                                                                                                                              |
+| Check             | Status | Current evidence                                                                                                                                                                                                                                                                                                                     |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Format check      | Pass   | `npm run format:check`                                                                                                                                                                                                                                                                                                               |
+| ESLint            | Pass   | `npm run lint`; one advisory retained for the Obsidian 1.13 declarative settings API                                                                                                                                                                                                                                                 |
+| Unit tests        | Pass   | 42 tests across pagination geometry, touch/pen/mouse highlight and swipe intent, cross-page highlight continuation, translation, normalized positions, migration, configurable export paths, bookshelf visibility, book discovery helpers, bookmarks, text-anchor recovery, quote and export formatting, and fallback classification |
+| Type check        | Pass   | Strict TypeScript through `npm run build`                                                                                                                                                                                                                                                                                            |
+| Production bundle | Pass   | esbuild produces `main.js`                                                                                                                                                                                                                                                                                                           |
+| GitHub Actions    | Pass   | Hosted Linux validation completed successfully for the TypeScript foundation                                                                                                                                                                                                                                                         |
 
 ## Desktop reader
 
@@ -96,5 +96,6 @@ using the dedicated `obsidian-books-test` vault.
 | Quotes write to each configured destination | Pass   | Shared note, adjacent per-book `Annotations.md`, and configured annotation folder all passed                                                                                  |
 | Export all highlights                       | Pass   | Created one managed highlights note, opened it, and refreshed the same file from both command and settings button                                                             |
 | Export all quotes                           | Pass   | Created one separate managed quotes note, opened it, and refreshed the same file without duplicate snapshots                                                                  |
+| Configure annotation export folder          | Pass   | Standard and collision-safe timestamped highlight/quote paths honor a vault-relative configured folder while legacy settings retain the original default                      |
 | Quote reopens source near passage           | Pass   | Generated `obsidian://books-open` link reopened the saved book/chapter/fraction                                                                                               |
 | Source Markdown unchanged by default        | Pass   | Highlight and quote capture left the source chapter free of injected markers                                                                                                  |
