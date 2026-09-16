@@ -53,6 +53,9 @@ foundation.
   chapter order, and numeric-aware fallback ordering.
 - Render only the active chapter, continue across chapter boundaries, open a
   table of contents, and resume saved book/chapter progress.
+- Open a separate section table of contents from the toolbar to browse the
+  active chapter's rendered headings and subheadings, then jump directly to a
+  section in paginated or vertical reading mode.
 - Show estimated minutes left in the active chapter and save persistent
   chapter-aware bookmarks from the reader toolbar.
 - Add or remove a bookmark at the current reading location through an explicit
@@ -110,6 +113,17 @@ With a Markdown note active, use any of these:
 - Select the book icon in the ribbon.
 - Run **Open current note in Obsidian Books** from the command palette.
 - Right-click a Markdown file and choose **Open in Obsidian Books**.
+
+## Section table of contents
+
+Choose **Section table of contents** at the far right of the reader toolbar,
+immediately after the quote button. The outline follows the rendered H1–H6
+hierarchy in the active chapter and indents subheadings beneath their parent
+sections. Choose any entry to jump to its page or vertical scroll position.
+
+This chapter outline is separate from **Contents**, which continues to manage
+folder-book chapters, bookmarks, and saved annotations. Headings inside embedded
+notes are omitted so the outline stays scoped to the chapter you are reading.
 
 ## Highlights and quotes
 

@@ -4,6 +4,22 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-09-15
+
+### Added
+
+- A separate **Section table of contents** button immediately after the quote
+  button at the far right of the reader toolbar.
+- A touch-friendly chapter outline generated from rendered H1–H6 headings and
+  subheadings, with hierarchy-aware indentation and a clear no-headings state.
+- Direct section jumps in both paginated and vertical reading modes.
+
+### Changed
+
+- Kept the existing **Contents** panel focused on book chapters, bookmarks, and
+  annotations while excluding headings inside embedded notes from the new
+  chapter outline.
+
 ## [0.2.4] - 2026-07-26
 
 ### Added
