@@ -922,15 +922,10 @@ export class ReaderView extends ItemView {
 	private openSectionContents(): void {
 		if (!this.file) return;
 		const { items, elements } = this.sectionOutline();
-		new SectionContentsModal(
-			this.app,
-			this.file.basename,
-			items,
-			(section) => {
-				const heading = elements[section.sourceIndex];
-				if (heading) this.goToSection(heading);
-			},
-		).open();
+		new SectionContentsModal(this.app, this.file.basename, items, (section) => {
+			const heading = elements[section.sourceIndex];
+			if (heading) this.goToSection(heading);
+		}).open();
 	}
 
 	private goToSection(heading: HTMLElement): void {

@@ -678,7 +678,7 @@ body.books-immersive.books-chrome-hidden .status-bar {
 	align-items: center;
 	width: 100%;
 	min-height: 40px;
-	padding: 8px 10px 8px calc(10px + var(--books-section-depth, 0) * 18px);
+	padding: 8px 10px 8px calc(10px + var(--books-section-indent, 0px));
 	color: var(--text-normal);
 	text-align: left;
 	white-space: normal;

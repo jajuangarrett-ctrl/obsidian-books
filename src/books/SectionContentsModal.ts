@@ -39,7 +39,7 @@ export class SectionContentsModal extends Modal {
 				cls: 'books-section-contents-open',
 				attr: { type: 'button' },
 			});
-			button.style.setProperty('--books-section-depth', String(section.depth));
+			button.style.setProperty('--books-section-indent', `${section.depth * 18}px`);
 			button.createSpan({
 				cls: 'books-section-contents-level',
 				text: `H${section.level}`,
