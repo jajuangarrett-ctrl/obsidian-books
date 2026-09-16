@@ -14,6 +14,7 @@ import {
 import type ObsidianBooksPlugin from '../main';
 import { createTextAnchor, locateTextAnchor, mergeTextAnchors } from '../annotations/anchors';
 import { BookContentsModal } from '../books/BookContentsModal';
+import { SectionContentsModal } from '../books/SectionContentsModal';
 import type { BookRecord } from '../books/domain';
 import { chapterStatus, minutesLeft, pageStatus, scrollStatus, t } from '../i18n';
 import type { ReadingAnnotation, TextAnchor } from '../types';
@@ -34,6 +35,12 @@ import {
 	pageGestureAllowed,
 	type GesturePoint,
 } from './highlight-gesture';
+import {
+	buildSectionOutline,
+	pageForSectionOffset,
+	scrollTopForSection,
+	type SectionOutlineItem,
+} from './section-outline';
 
 export const VIEW_TYPE_READER = 'obsidian-books-reader';
 
@@ -98,6 +105,7 @@ export class ReaderView extends ItemView {
 	private bookmarkButton!: HTMLButtonElement;
 	private highlightButton!: HTMLButtonElement;
 	private quoteButton!: HTMLButtonElement;
+	private sectionContentsButton!: HTMLButtonElement;
 	private bookTitleText!: HTMLElement;
 	private chapterTitleText!: HTMLElement;
 	private previousChapterButton!: HTMLButtonElement;
@@ -207,6 +215,15 @@ export class ReaderView extends ItemView {
 			attr: { type: 'button', 'aria-label': t('saveQuote') },
 		});
 		this.quoteButton.disabled = true;
+		this.sectionContentsButton = chapterLeading.createEl('button', {
+			cls: 'books-chapter-button books-section-contents-button',
+			text: '☷',
+			attr: {
+				type: 'button',
+				'aria-label': t('sectionContents'),
+				'aria-haspopup': 'dialog',
+			},
+		});
 		const chapterLabels = this.chapterBar.createDiv({ cls: 'books-chapter-labels' });
 		this.bookTitleText = chapterLabels.createDiv({ cls: 'books-book-title' });
 		this.chapterTitleText = chapterLabels.createDiv({ cls: 'books-chapter-title' });
@@ -307,6 +324,10 @@ export class ReaderView extends ItemView {
 			event.stopPropagation();
 			this.saveSelection('quote');
 		});
+		this.registerDomEvent(this.sectionContentsButton, 'click', (event) => {
+			event.stopPropagation();
+			this.openSectionContents();
+		});
 		for (const button of [this.continueHighlightButton, this.finishHighlightButton]) {
 			this.registerDomEvent(button, 'mousedown', (event) => event.preventDefault());
 		}
@@ -365,6 +386,7 @@ export class ReaderView extends ItemView {
 		if (!this.file) {
 			this.content.empty();
 			this.content.createDiv({ cls: 'books-empty', text: t('notFound') });
+			this.sectionContentsButton.disabled = true;
 			return;
 		}
 
@@ -406,6 +428,7 @@ export class ReaderView extends ItemView {
 			console.error('Obsidian Books could not render Markdown.', error);
 			this.content.empty();
 			this.content.createDiv({ cls: 'books-empty', text: t('renderError') });
+			this.sectionContentsButton.disabled = true;
 			return;
 		}
 		if (generation !== this.renderGeneration) return;
@@ -417,6 +440,7 @@ export class ReaderView extends ItemView {
 			});
 			this.content.insertBefore(title, this.content.firstChild);
 		}
+		this.sectionContentsButton.disabled = false;
 		this.applyStoredHighlights();
 
 		const savedPosition = this.booksPlugin.settings.rememberPosition
@@ -877,6 +901,62 @@ export class ReaderView extends ItemView {
 				void this.renderFile();
 			},
 		).open();
+	}
+
+	private sectionOutline(): {
+		items: SectionOutlineItem[];
+		elements: HTMLElement[];
+	} {
+		const elements = Array.from(
+			this.content.querySelectorAll<HTMLElement>('h1, h2, h3, h4, h5, h6'),
+		).filter((heading) => !heading.closest('.internal-embed'));
+		const items = buildSectionOutline(
+			elements.map((heading) => ({
+				text: heading.textContent ?? '',
+				level: Number.parseInt(heading.tagName.slice(1), 10),
+			})),
+		);
+		return { items, elements };
+	}
+
+	private openSectionContents(): void {
+		if (!this.file) return;
+		const { items, elements } = this.sectionOutline();
+		new SectionContentsModal(
+			this.app,
+			this.file.basename,
+			items,
+			(section) => {
+				const heading = elements[section.sourceIndex];
+				if (heading) this.goToSection(heading);
+			},
+		).open();
+	}
+
+	private goToSection(heading: HTMLElement): void {
+		this.dismissHighlightActions();
+		if (this.verticalMode) {
+			const verticalOffset =
+				heading.getBoundingClientRect().top - this.content.getBoundingClientRect().top;
+			const maximumScroll = Math.max(
+				0,
+				this.viewport.scrollHeight - this.viewport.clientHeight,
+			);
+			this.viewport.scrollTop = scrollTopForSection(
+				verticalOffset,
+				this.chapterBar.offsetHeight + 12,
+				maximumScroll,
+			);
+			this.verticalFraction = this.currentFraction();
+			this.updateStatus();
+			this.savePosition(this.verticalFraction);
+		} else {
+			const horizontalOffset =
+				heading.getBoundingClientRect().left - this.content.getBoundingClientRect().left;
+			this.goTo(pageForSectionOffset(horizontalOffset, this.pageStride, this.totalPages));
+		}
+		heading.tabIndex = -1;
+		heading.focus({ preventScroll: true });
 	}
 
 	private countWords(markdown: string): number {
