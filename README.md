@@ -24,7 +24,7 @@ foundation.
 
 - Render Markdown with Obsidian's supported `MarkdownRenderer` API.
 - Read in responsive one-page or two-page spreads.
-- Navigate with swipe, tap zones, arrow keys, Page Up/Down, Space, Home/End,
+- Navigate with swipe, margin tap zones, arrow keys, Page Up/Down, Space, Home/End,
   mouse wheel, or labelled on-screen buttons.
 - Keep touch-swiped pages centered on iPad and mobile while the destination page
   snaps into the same reading frame.
@@ -124,6 +124,18 @@ sections. Choose any entry to jump to its page or vertical scroll position.
 This chapter outline is separate from **Contents**, which continues to manage
 folder-book chapters, bookmarks, and saved annotations. Headings inside embedded
 notes are omitted so the outline stays scoped to the chapter you are reading.
+
+## Copying text on mobile
+
+With highlight mode off, long-press a word and drag the native selection handles
+across the passage. Choose **Copy** in the footer, or **Copy** in the native
+selection menu. The footer button preserves the selected text if tapping it
+changes focus. Multiple paragraphs and existing highlighted text can be copied.
+
+Page arrows sit below the paginated reading area. Text taps and held selection
+gestures do not turn pages; quick swipes, margin taps, and the footer arrows still
+navigate. Turn off the marker button before using native selection if highlight
+mode is active.
 
 ## Highlights and quotes
 

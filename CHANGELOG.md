@@ -4,6 +4,24 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-10-10
+
+### Fixed
+
+- Moved page-turn arrows into a separate footer below the paginated text, with
+  44px touch targets, so they cannot cover passages or selection handles.
+- Long presses and selection adjustments no longer get claimed by page swiping;
+  taps on chapter text no longer activate page-turn zones.
+- Explicitly enabled native text selection and the iOS text callout in the reader.
+
+### Added
+
+- A **Copy** footer button for selected text, including multiple paragraphs.
+  The selection is captured before mobile focus changes, and a native-copy
+  fallback handles WebViews without working Clipboard API access.
+- Clipboard regression tests covering exact multiline text, unavailable/denied
+  Clipboard API access, selection restoration, empty selections, and failure.
+
 ## [0.2.5] - 2026-09-15
 
 ### Added

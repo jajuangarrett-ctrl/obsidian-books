@@ -100,3 +100,20 @@ using the dedicated `obsidian-books-test` vault.
 | Configure annotation export folder          | Pass   | Standard and collision-safe timestamped highlight/quote paths honor a vault-relative configured folder while legacy settings retain the original default                      |
 | Quote reopens source near passage           | Pass   | Generated `obsidian://books-open` link reopened the saved book/chapter/fraction                                                                                               |
 | Source Markdown unchanged by default        | Pass   | Highlight and quote capture left the source chapter free of injected markers                                                                                                  |
+
+## 0.2.6 focused mobile-copy check — 2026-10-10
+
+- Build, format, and lint completed (no lint errors); 50 automated tests pass.
+- In the dedicated Obsidian test vault, 390px, 820px, and 1180px paginated
+  viewports place 44px page controls entirely below the text stage.
+- A 290-character selection spanning paragraphs matched the actual system
+  clipboard exactly, including after simulated mobile focus loss before Copy.
+- Synthetic held-touch movement and selection-handle movement do not turn
+  pages or prevent native selection; a quick swipe and footer navigation work.
+- Copy is disabled without a selection. With Clipboard writes deliberately
+  rejected, a trusted button click copied the exact passage using native copy,
+  restored selection, and removed its temporary input. Automated tests also
+  cover missing Clipboard access and reported copy failure.
+- These are desktop Obsidian renderer/mobile-style checks, not physical-device
+  validation. Native iPhone/iPad long-press menus and finger handles remain to
+  be confirmed after installing 0.2.6 on the receiving device.

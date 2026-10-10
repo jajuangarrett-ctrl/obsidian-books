@@ -27,6 +27,7 @@ import {
 	pageToFraction,
 	swipePageDelta,
 } from './pagination';
+import { copySelectedText } from './clipboard';
 import { verticalFallbackReason, type FallbackBlockMeasurement } from './fallback';
 import {
 	canContinueHighlight,
@@ -105,6 +106,8 @@ export class ReaderView extends ItemView {
 	private bookmarkButton!: HTMLButtonElement;
 	private highlightButton!: HTMLButtonElement;
 	private quoteButton!: HTMLButtonElement;
+	private copyButton!: HTMLButtonElement;
+	private copyTextOnPress: string | null = null;
 	private sectionContentsButton!: HTMLButtonElement;
 	private bookTitleText!: HTMLElement;
 	private chapterTitleText!: HTMLElement;
@@ -246,19 +249,27 @@ export class ReaderView extends ItemView {
 		this.content = this.stage.createDiv({ cls: 'books-content markdown-rendered' });
 		this.content.setAttribute('role', 'article');
 
-		this.previousButton = this.viewport.createEl('button', {
+		this.statusBar = this.viewport.createDiv({ cls: 'books-statusbar books-ui' });
+		const navigation = this.statusBar.createDiv({ cls: 'books-footer-navigation' });
+		this.previousButton = navigation.createEl('button', {
 			cls: 'books-nav-button books-previous books-ui',
 			attr: { 'aria-label': t('previousPage'), type: 'button' },
 		});
 		this.previousButton.setText('‹');
 
-		this.nextButton = this.viewport.createEl('button', {
+		this.copyButton = navigation.createEl('button', {
+			cls: 'books-copy-button',
+			text: t('copy'),
+			attr: { type: 'button', 'aria-label': t('copySelection') },
+		});
+		this.copyButton.disabled = true;
+
+		this.nextButton = navigation.createEl('button', {
 			cls: 'books-nav-button books-next books-ui',
 			attr: { 'aria-label': t('nextPage'), type: 'button' },
 		});
 		this.nextButton.setText('›');
 
-		this.statusBar = this.viewport.createDiv({ cls: 'books-statusbar books-ui' });
 		const progress = this.statusBar.createDiv({ cls: 'books-progress' });
 		progress.setAttribute('role', 'progressbar');
 		progress.setAttribute('aria-valuemin', '1');
@@ -286,6 +297,29 @@ export class ReaderView extends ItemView {
 			cls: 'books-highlight-action-button',
 			text: t('finishHighlight'),
 			attr: { type: 'button', 'aria-label': t('finishHighlight') },
+		});
+
+		// Capture before a mobile toolbar tap can collapse the native selection.
+		this.registerDomEvent(this.copyButton, 'pointerdown', () => {
+			this.copyTextOnPress = this.captureSelection()?.selectedText ?? null;
+		});
+		this.registerDomEvent(this.copyButton, 'mousedown', (event) => event.preventDefault());
+		this.registerDomEvent(this.copyButton, 'pointercancel', () => {
+			this.copyTextOnPress = null;
+			this.copyButton.disabled = !this.captureSelection();
+		});
+		this.registerDomEvent(this.copyButton, 'click', (event) => {
+			event.stopPropagation();
+			const text = this.copyTextOnPress ?? this.captureSelection()?.selectedText;
+			this.copyTextOnPress = null;
+			this.copyButton.disabled = !this.captureSelection();
+			if (!text) {
+				new Notice(t('selectTextFirst'));
+				return;
+			}
+			void copySelectedText(this.contentEl.ownerDocument, text).then((copied) => {
+				new Notice(t(copied ? 'selectionCopied' : 'copyFailed'));
+			});
 		});
 
 		this.registerDomEvent(this.previousButton, 'click', (event) => {
@@ -588,7 +622,10 @@ export class ReaderView extends ItemView {
 	}
 
 	private detectVerticalFallback(): boolean {
-		const availableHeight = Math.max(1, this.viewport.clientHeight - 110);
+		const availableHeight = Math.max(
+			1,
+			this.viewport.clientHeight - this.statusBar.offsetHeight - 110,
+		);
 		const blocks: FallbackBlockMeasurement[] = [];
 		const seen = new Set<Element>();
 		const add = (element: Element, kind: FallbackBlockMeasurement['kind']): void => {
@@ -968,7 +1005,9 @@ export class ReaderView extends ItemView {
 	private setupSelectionCapture(): void {
 		const update = (): void => {
 			this.selectionCapture = this.captureSelection();
+			if (this.selectionCapture) this.viewport.removeClass('books-hide-ui');
 			this.quoteButton.disabled = !this.selectionCapture;
+			this.copyButton.disabled = !this.selectionCapture && !this.copyTextOnPress;
 			this.updateHighlightButton();
 		};
 		this.registerDomEvent(this.viewport, 'mouseup', update);
@@ -1010,6 +1049,8 @@ export class ReaderView extends ItemView {
 	private clearNativeSelection(): void {
 		this.contentEl.ownerDocument.getSelection()?.removeAllRanges();
 		this.selectionCapture = null;
+		this.copyTextOnPress = null;
+		this.copyButton.disabled = true;
 		this.quoteButton.disabled = true;
 		this.updateHighlightButton();
 	}
@@ -1502,6 +1543,7 @@ export class ReaderView extends ItemView {
 		this.debouncedRemeasure = repaginate;
 		this.resizeObserver = new ResizeObserver(repaginate);
 		this.resizeObserver.observe(this.viewport);
+		this.resizeObserver.observe(this.statusBar);
 		this.registerEvent(this.app.workspace.on('css-change', repaginate));
 		this.registerEvent(this.app.workspace.on('resize', repaginate));
 		this.registerDomEvent(this.viewport, 'scroll', () => {
@@ -1686,6 +1728,11 @@ export class ReaderView extends ItemView {
 			'touchmove',
 			(event) => {
 				if (!dragging) return;
+				// A held finger belongs to native selection, even before selectionchange fires.
+				if (!decided && Date.now() - startTime >= tapTimeThreshold) {
+					abortDrag();
+					return;
+				}
 				if (!pageGestureAllowed(this.highlightMode, this.hasTextSelection())) {
 					abortDrag();
 					return;
@@ -1713,9 +1760,10 @@ export class ReaderView extends ItemView {
 		);
 
 		const endTouch = (event: TouchEvent): void => {
+			// Also suppress compatibility clicks after an aborted selection gesture.
+			this.lastTouchAt = Date.now();
 			if (!dragging) return;
 			dragging = false;
-			this.lastTouchAt = Date.now();
 			if (!pageGestureAllowed(this.highlightMode, this.hasTextSelection())) {
 				this.applyTransform();
 				return;
@@ -1734,7 +1782,11 @@ export class ReaderView extends ItemView {
 				Math.abs(deltaY) < tapMoveThreshold &&
 				elapsed < tapTimeThreshold
 			) {
-				if (this.hasTextSelection() || !this.booksPlugin.settings.tapZones) {
+				if (
+					this.hasTextSelection() ||
+					(event.target instanceof Node && this.content.contains(event.target)) ||
+					!this.booksPlugin.settings.tapZones
+				) {
 					this.applyTransform();
 					return;
 				}
@@ -1756,12 +1808,17 @@ export class ReaderView extends ItemView {
 			capture: true,
 			passive: true,
 		});
+		this.registerDomEvent(this.contentEl.ownerDocument, 'selectionchange', () => {
+			if (this.hasTextSelection()) abortDrag();
+		});
+		this.registerDomEvent(this.viewport, 'contextmenu', abortDrag);
 		this.registerDomEvent(this.viewport, 'touchcancel', abortDrag, {
 			capture: true,
 			passive: true,
 		});
 
 		this.registerDomEvent(this.viewport, 'click', (event) => {
+			if (this.hasTextSelection()) return;
 			if (this.openHighlightActions(event.target)) {
 				event.preventDefault();
 				event.stopPropagation();
@@ -1776,6 +1833,7 @@ export class ReaderView extends ItemView {
 				this.isInteractive(event.target) ||
 				this.isScrollable(event.target) ||
 				this.hasTextSelection() ||
+				(event.target instanceof Node && this.content.contains(event.target)) ||
 				!this.booksPlugin.settings.tapZones
 			) {
 				return;

@@ -43,6 +43,10 @@ const STRINGS = {
 		highlightModeEnabled:
 			'Highlight mode on. Drag across text with a finger, Apple Pencil, or mouse.',
 		highlightModeDisabled: 'Highlight mode off.',
+		copy: 'Copy',
+		copySelection: 'Copy selected text',
+		selectionCopied: 'Selected text copied.',
+		copyFailed: 'Copy failed. Use Copy in the native text-selection menu.',
 		saveQuote: 'Save selected quote',
 		selectTextFirst: 'Select text in the chapter first.',
 		highlightAdded: 'Highlight added without changing the source note.',
@@ -176,6 +180,10 @@ const STRINGS = {
 		highlightModeEnabled:
 			'Режим выделения включён. Проведите по тексту пальцем, Apple Pencil или мышью.',
 		highlightModeDisabled: 'Режим выделения выключен.',
+		copy: 'Копировать',
+		copySelection: 'Копировать выделенный текст',
+		selectionCopied: 'Выделенный текст скопирован.',
+		copyFailed: 'Не удалось скопировать. Используйте меню выделения текста.',
 		saveQuote: 'Сохранить выбранную цитату',
 		selectTextFirst: 'Сначала выберите текст в главе.',
 		highlightAdded: 'Выделение добавлено без изменения исходной заметки.',
