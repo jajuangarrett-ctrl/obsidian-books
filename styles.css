@@ -1015,9 +1015,13 @@ body.books-immersive.books-chrome-hidden .status-bar {
 	opacity: 0;
 }
 
-/* Reading canvas keeps its geometry when chrome fades, so no text jumps. */
+/* Visible chrome owns space; hidden chrome returns that space to the book. */
 .books-auto-hide .books-content {
 	padding: max(16px, env(safe-area-inset-top)) 0 max(30px, env(safe-area-inset-bottom));
+}
+.books-auto-hide:not(.books-hide-ui) .books-content {
+	padding-top: max(var(--books-controls-top, 76px), env(safe-area-inset-top));
+	padding-bottom: max(var(--books-controls-bottom, 100px), env(safe-area-inset-bottom));
 }
 .books-auto-hide .books-statusbar {
 	position: absolute;
@@ -1056,4 +1060,12 @@ body.books-immersive.books-chrome-hidden .status-bar {
 }
 .books-auto-hide.books-vertical-mode .books-statusbar {
 	position: sticky;
+}
+
+/* Reader chrome is never part of a book-text drag selection. */
+.books-chapterbar,
+.books-page-numbers,
+.books-highlight-actions {
+	-webkit-user-select: none;
+	user-select: none;
 }

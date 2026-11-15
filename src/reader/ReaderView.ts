@@ -91,7 +91,9 @@ export class ReaderView extends ItemView {
 	private totalColumns = 1;
 	private pageNumbers!: HTMLElement;
 	private controlsTimer: number | null = null;
+	private controlsBoundary: Range | null = null;
 	private keyboardControls = false;
+	private controlsPointerDown = false;
 	private totalPages = 1;
 	private pageStride = 0;
 	private columnGap = 0;
@@ -425,6 +427,7 @@ export class ReaderView extends ItemView {
 	}
 
 	public async renderFile(): Promise<void> {
+		this.controlsBoundary = null;
 		if (!this.content) return;
 		this.dismissHighlightActions();
 		if (!this.file) {
@@ -578,6 +581,14 @@ export class ReaderView extends ItemView {
 
 	private measure(): void {
 		if (!this.content || !this.viewport) return;
+		this.viewport.style.setProperty(
+			'--books-controls-top',
+			`${this.chapterBar.offsetHeight + 12}px`,
+		);
+		this.viewport.style.setProperty(
+			'--books-controls-bottom',
+			`${this.statusBar.offsetHeight + 12}px`,
+		);
 		const viewportWidth = this.viewport.clientWidth;
 		if (!viewportWidth) return;
 		if (this.detectVerticalFallback()) {
@@ -644,11 +655,13 @@ export class ReaderView extends ItemView {
 	}
 
 	private detectVerticalFallback(): boolean {
+		const contentStyle = this.content.win.getComputedStyle(this.content);
 		const availableHeight = Math.max(
 			1,
-			this.booksPlugin.settings.autoHideControls
-				? this.viewport.clientHeight - 46
-				: this.viewport.clientHeight - this.statusBar.offsetHeight - 110,
+			this.viewport.clientHeight -
+				(Number.parseFloat(contentStyle.paddingTop) || 0) -
+				(Number.parseFloat(contentStyle.paddingBottom) || 0) -
+				(this.booksPlugin.settings.autoHideControls ? 0 : this.statusBar.offsetHeight),
 		);
 		const blocks: FallbackBlockMeasurement[] = [];
 		const seen = new Set<Element>();
@@ -752,6 +765,7 @@ export class ReaderView extends ItemView {
 	}
 
 	private goTo(requestedPage: number, animate = true, preserveHighlightActions = false): void {
+		this.controlsBoundary = null;
 		const nextPage = clampPage(requestedPage, this.totalPages);
 		if (nextPage === this.page) {
 			this.updateStatus();
@@ -1039,7 +1053,7 @@ export class ReaderView extends ItemView {
 	private setupSelectionCapture(): void {
 		const update = (): void => {
 			this.selectionCapture = this.captureSelection();
-			if (this.selectionCapture) this.viewport.removeClass('books-hide-ui');
+			if (this.selectionCapture && !this.controlsPointerDown) this.showControls();
 			this.quoteButton.disabled = !this.selectionCapture;
 			this.copyButton.disabled = !this.selectionCapture && !this.copyTextOnPress;
 			this.updateHighlightButton();
@@ -1060,7 +1074,17 @@ export class ReaderView extends ItemView {
 	}
 
 	private captureRange(range: Range): SelectionCapture | null {
-		if (!this.content.contains(range.commonAncestorContainer)) return null;
+		if (!range.intersectsNode(this.content)) return null;
+		// Native handles may cross chrome. Export only the intersection with book text.
+		const bookRange = this.contentEl.ownerDocument.createRange();
+		bookRange.selectNodeContents(this.content);
+		range = range.cloneRange();
+		if (range.compareBoundaryPoints(Range.START_TO_START, bookRange) < 0) {
+			range.setStart(bookRange.startContainer, bookRange.startOffset);
+		}
+		if (range.compareBoundaryPoints(Range.END_TO_END, bookRange) > 0) {
+			range.setEnd(bookRange.endContainer, bookRange.endOffset);
+		}
 		const rawText = range.toString();
 		const selectedText = rawText.trim();
 		if (!selectedText) return null;
@@ -1596,6 +1620,7 @@ export class ReaderView extends ItemView {
 		const focused = doc.activeElement;
 		return (
 			this.keyboardControls ||
+			this.controlsPointerDown ||
 			this.highlightMode ||
 			this.hasTextSelection() ||
 			Boolean(this.highlightActionAnnotationId) ||
@@ -1614,18 +1639,101 @@ export class ReaderView extends ItemView {
 				this.scheduleControlsHide();
 				return;
 			}
-			this.viewport.addClass('books-hide-ui');
+			this.setControlsVisible(false);
 			if (
 				this.booksPlugin.settings.immersive &&
 				this.app.workspace.activeLeaf === this.leaf
 			) {
 				this.booksPlugin.applyImmersive(this.leaf);
 			}
-		}, 3000);
+		}, 1250);
+	}
+
+	/** Keep a real text boundary in view when temporary chrome changes column height. */
+	private visibleTextBoundary(): Range | null {
+		if (!this.measured || this.verticalMode) return null;
+		const bounds = this.stage.getBoundingClientRect();
+		const walker = this.contentEl.ownerDocument.createTreeWalker(this.content, 4);
+		const range = this.contentEl.ownerDocument.createRange();
+		let node: Node | null;
+		while ((node = walker.nextNode())) {
+			if (!node.instanceOf(Text) || !node.data.trim()) continue;
+			range.selectNodeContents(node);
+			if (
+				!Array.from(range.getClientRects()).some(
+					(rect) =>
+						rect.right > bounds.left &&
+						rect.left < bounds.right &&
+						rect.bottom > bounds.top &&
+						rect.top < bounds.bottom,
+				)
+			)
+				continue;
+			for (let offset = 0; offset < node.length; offset++) {
+				if (!node.data[offset]?.trim()) continue;
+				range.setStart(node, offset);
+				range.setEnd(node, offset + 1);
+				const rect = range.getBoundingClientRect();
+				if (
+					rect.left >= bounds.left - 1 &&
+					rect.right <= bounds.right + 1 &&
+					rect.top >= bounds.top &&
+					rect.bottom <= bounds.bottom
+				)
+					return range.cloneRange();
+			}
+		}
+		return null;
+	}
+
+	private restoreTextBoundary(boundary: Range | null): void {
+		if (
+			!boundary ||
+			this.verticalMode ||
+			!this.content.contains(boundary.startContainer) ||
+			!this.pageStride
+		)
+			return;
+		const range = boundary;
+		const offset =
+			range.getBoundingClientRect().left - this.content.getBoundingClientRect().left;
+		this.page = clampPage(Math.floor((offset + 1) / this.pageStride), this.totalPages);
+		this.applyTransform();
+		this.updateStatus();
+	}
+
+	private setControlsVisible(visible: boolean): void {
+		const fraction = this.pendingFraction ?? this.currentFraction();
+		const changed = this.viewport.hasClass('books-hide-ui') === visible;
+		const boundary = changed
+			? visible
+				? this.visibleTextBoundary()
+				: (this.controlsBoundary ?? this.visibleTextBoundary())
+			: null;
+		if (changed) this.controlsBoundary = visible ? boundary : null;
+		this.viewport.toggleClass('books-hide-ui', !visible);
+		// Measure real chrome, including wrapped labels and accessibility text sizes.
+		const top = this.chapterBar.offsetHeight + 12;
+		const bottom = this.statusBar.offsetHeight + 12;
+		const oldTop = this.viewport.style.getPropertyValue('--books-controls-top');
+		const oldBottom = this.viewport.style.getPropertyValue('--books-controls-bottom');
+		this.viewport.style.setProperty('--books-controls-top', `${top}px`);
+		this.viewport.style.setProperty('--books-controls-bottom', `${bottom}px`);
+		if (this.measured && (changed || oldTop !== `${top}px` || oldBottom !== `${bottom}px`)) {
+			this.pendingFraction = fraction;
+			this.measure();
+			if (this.verticalMode) this.restoreVerticalFraction(fraction);
+			else {
+				this.content.addClass('books-measuring');
+				this.restoreTextBoundary(boundary);
+				this.content.getBoundingClientRect();
+				this.content.removeClass('books-measuring');
+			}
+		}
 	}
 
 	private showControls(): void {
-		this.viewport.removeClass('books-hide-ui');
+		this.setControlsVisible(true);
 		this.scheduleControlsHide();
 	}
 
@@ -1644,6 +1752,7 @@ export class ReaderView extends ItemView {
 			this.viewport,
 			'pointerdown',
 			(event) => {
+				this.controlsPointerDown = true;
 				if (!this.isInteractive(event.target)) {
 					const active = this.contentEl.ownerDocument.activeElement;
 					if (active instanceof HTMLElement && active.closest('.books-ui')) active.blur();
@@ -1653,12 +1762,20 @@ export class ReaderView extends ItemView {
 			},
 			{ capture: true },
 		);
+		for (const eventName of ['pointerup', 'pointercancel'] as const) {
+			this.registerDomEvent(this.contentEl.ownerDocument, eventName, () => {
+				if (!this.controlsPointerDown) return;
+				this.controlsPointerDown = false;
+				if (this.hasTextSelection()) this.showControls();
+				else this.scheduleControlsHide();
+			});
+		}
 		this.registerDomEvent(this.viewport, 'focusin', (event) => {
 			if (event.target instanceof Element && event.target.closest('.books-ui'))
 				this.showControls();
 		});
 		this.registerDomEvent(this.contentEl.ownerDocument, 'selectionchange', () => {
-			if (this.hasTextSelection()) this.showControls();
+			if (this.hasTextSelection() && !this.controlsPointerDown) this.showControls();
 		});
 		this.scheduleControlsHide();
 	}
@@ -1670,7 +1787,7 @@ export class ReaderView extends ItemView {
 
 	private exitReadingChrome(): void {
 		this.booksPlugin.showImmersiveChrome(this.contentEl.ownerDocument);
-		this.viewport.removeClass('books-hide-ui');
+		this.showControls();
 	}
 
 	private buildScope(): void {

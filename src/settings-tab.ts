@@ -32,7 +32,7 @@ export class ReaderSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Auto-hide reading controls')
 			.setDesc(
-				'Hide controls after three seconds. Tap the middle of the page or press a key to show them. Disable to keep controls visible.',
+				'Hide controls after 1.25 seconds. Tap the middle of the page or press a key to show them. Disable to keep controls visible.',
 			)
 			.addToggle((toggle) =>
 				toggle

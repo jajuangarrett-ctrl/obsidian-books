@@ -4,6 +4,20 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-11-15
+
+### Fixed
+
+- Visible controls now reserve their measured height above and below the text,
+  leaving the first and last lines visible and selectable. Hiding them restores
+  the expanded canvas; a live text anchor prevents repeated reveals from drifting.
+- Auto-hide now waits 1.25 seconds instead of three, without hiding during pointer
+  gestures, selection, highlight actions, dialogs or keyboard interaction.
+- Toolbar labels are excluded from text selection. Copy/highlight captures are
+  restricted to book content even when native selection handles cross UI boundaries.
+- Added actual top-line drag, copy, highlight, bottom hit-testing and repeated-toggle
+  browser regressions.
+
 ## [0.2.7] - 2026-11-15
 
 ### Improved

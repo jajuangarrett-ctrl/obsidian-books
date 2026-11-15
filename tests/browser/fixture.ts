@@ -54,6 +54,7 @@ const plugin = {
 	positions: {},
 	getAnnotationsForSource: () => [],
 	getBookmarkAt: () => null,
+	findBookmark: () => null,
 	getBookmarksForBook: () => [],
 	getBookmarksForSource: () => [],
 	showImmersiveChrome() {
