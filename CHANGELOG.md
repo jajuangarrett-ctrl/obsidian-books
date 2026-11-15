@@ -4,6 +4,22 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.9] - 2026-11-15
+
+### Fixed
+
+- Native text selection no longer reveals full chrome or changes pagination. A
+  small independent Copy/Highlight strip appears away from the selected passage.
+- Pointer holds, selection handles and pending native selection block automatic
+  layout changes. Vertical touch drift no longer reapplies reader settings, and
+  compatibility taps after a long press cannot reveal controls.
+- Selection actions retain their captured text if mobile toolbar focus collapses
+  the native selection. Continue/Finish remain accessible without full chrome;
+  continuation extends the existing highlight rather than creating a duplicate.
+- Explicit center-tap anchors now use actual positive-area glyph fragments.
+- Added long split-paragraph regressions in Chrome and WebKit, including fixed
+  glyph coordinates, copy, highlight and cross-page continuation.
+
 ## [0.2.8] - 2026-11-15
 
 ### Fixed

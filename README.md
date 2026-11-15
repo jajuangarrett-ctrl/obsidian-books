@@ -244,7 +244,7 @@ Oversized chapters automatically switch to a native vertical reading flow:
 [MIT](LICENSE). The original MD Reader copyright and license are preserved; see
 [NOTICE.md](NOTICE.md) for attribution.
 
-### Compact reading and automatic controls (0.2.8)
+### Compact reading and automatic controls (0.2.9)
 
 Automatic page mode now follows the **reader pane**, not the device label: portrait
 uses one page; landscape uses a two-page book spread when both columns have enough
@@ -254,7 +254,11 @@ bookmarks and text-anchored highlights are unchanged.
 
 Reading controls fade after 1.25 idle seconds. A short tap in the center of the
 page reveals them (and Obsidian navigation) without turning the page. Selection,
-highlight actions, open menus/dialogs and keyboard navigation keep controls visible.
+highlight actions, open menus/dialogs and keyboard navigation keep already-visible
+controls available. Selecting text while controls are hidden does **not** open or
+resize full controls: a separate Copy/Highlight strip appears away from the
+selection. This keeps the passage and native selection handles still. Continue and
+Finish actions remain accessible in that strip after highlighting.
 Disable **Auto-hide reading controls** in settings for persistent controls. Hidden
 controls remain keyboard accessible and reveal on focus. Visible controls reserve
 space above and below the book, so the first and last

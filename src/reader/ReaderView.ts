@@ -78,6 +78,7 @@ const INTERACTIVE_SELECTOR = [
 	'video',
 	'iframe',
 	'.books-ui',
+	'.books-selection-tools',
 ].join(', ');
 
 export class ReaderView extends ItemView {
@@ -94,6 +95,7 @@ export class ReaderView extends ItemView {
 	private controlsBoundary: Range | null = null;
 	private keyboardControls = false;
 	private controlsPointerDown = false;
+	private settingsPending = false;
 	private totalPages = 1;
 	private pageStride = 0;
 	private columnGap = 0;
@@ -132,6 +134,10 @@ export class ReaderView extends ItemView {
 	private continueHighlightButton!: HTMLButtonElement;
 	private finishHighlightButton!: HTMLButtonElement;
 	private selectionCapture: SelectionCapture | null = null;
+	private selectionTools!: HTMLElement;
+	private selectionActionCapture: SelectionCapture | null = null;
+	private readingPressAt = 0;
+	private suppressChromeClickUntil = 0;
 	private highlightMode = false;
 	private lastHighlightGestureAt = 0;
 	private highlightActionAnnotationId: string | null = null;
@@ -398,6 +404,7 @@ export class ReaderView extends ItemView {
 
 		this.setupAutoHide();
 		this.setupInput();
+		this.setupSelectionTools();
 		this.setupSelectionCapture();
 		this.setupHighlightGesture();
 		this.setupRepagination();
@@ -508,6 +515,11 @@ export class ReaderView extends ItemView {
 
 	public applySettings(): void {
 		if (!this.content) return;
+		if (this.controlsPointerDown || this.hasTextSelection() || this.selectionActionCapture) {
+			this.settingsPending = true;
+			return;
+		}
+		this.settingsPending = false;
 		const settings = this.booksPlugin.settings;
 		this.viewport.toggleClass('books-auto-hide', settings.autoHideControls);
 		this.showControls();
@@ -1050,10 +1062,84 @@ export class ReaderView extends ItemView {
 			.filter(Boolean).length;
 	}
 
+	private setupSelectionTools(): void {
+		// Independent of the paginated stage: selecting text must never repaginate it.
+		this.selectionTools = this.viewport.createDiv({ cls: 'books-selection-tools' });
+		this.selectionTools.hidden = true;
+		this.selectionTools.setAttribute('role', 'toolbar');
+		this.selectionTools.setAttribute('aria-label', 'Selected text actions');
+		for (const [label, original] of [
+			[t('copySelection'), this.copyButton],
+			[t('highlightSelection'), this.highlightButton],
+		] as const) {
+			const button = this.selectionTools.createEl('button', {
+				text: label,
+				attr: { type: 'button' },
+			});
+			this.registerDomEvent(button, 'pointerdown', () => {
+				this.selectionCapture = this.captureSelection() ?? this.selectionCapture;
+				this.selectionActionCapture = this.selectionCapture;
+				this.copyTextOnPress = this.selectionCapture?.selectedText ?? null;
+			});
+			this.registerDomEvent(button, 'pointercancel', () => {
+				this.selectionActionCapture = null;
+				this.copyTextOnPress = null;
+				this.updateSelectionTools();
+			});
+			this.registerDomEvent(button, 'mousedown', (event) => event.preventDefault());
+			this.registerDomEvent(button, 'click', (event) => {
+				event.stopPropagation();
+				if (original === this.highlightButton && this.selectionActionCapture) {
+					if (this.continuingHighlightId)
+						this.extendHighlight(this.selectionActionCapture);
+					else this.saveSelection('highlight', this.selectionActionCapture);
+				} else original.click();
+				this.selectionActionCapture = null;
+				this.updateSelectionTools();
+			});
+		}
+	}
+
+	private updateSelectionTools(): void {
+		if (!this.selectionTools) return;
+		if (
+			this.settingsPending &&
+			!this.controlsPointerDown &&
+			!this.hasTextSelection() &&
+			!this.selectionActionCapture
+		)
+			this.applySettings();
+		const selection = this.contentEl.ownerDocument.getSelection();
+		const selected = Boolean(this.captureSelection() ?? this.selectionActionCapture);
+		const hiddenChrome = this.viewport.hasClass('books-hide-ui');
+		const continuation = Boolean(this.highlightActionAnnotationId) && !selected;
+		const show = hiddenChrome && (selected || continuation);
+		this.selectionTools.hidden = !show;
+		for (const button of Array.from(this.selectionTools.children)) {
+			if (button instanceof HTMLButtonElement) button.hidden = !selected;
+		}
+		const actionsParent = hiddenChrome && continuation ? this.selectionTools : this.statusBar;
+		if (this.highlightActions.parentElement !== actionsParent)
+			actionsParent.appendChild(this.highlightActions);
+		if (!show || !selection?.rangeCount) return;
+		const bounds = this.viewport.getBoundingClientRect();
+		const rects = Array.from(selection.getRangeAt(0).getClientRects()).filter(
+			(rect) =>
+				rect.right > bounds.left &&
+				rect.left < bounds.right &&
+				rect.bottom > bounds.top &&
+				rect.top < bounds.bottom,
+		);
+		if (!rects.length) return;
+		const top = Math.min(...rects.map((rect) => rect.top)) - bounds.top;
+		const bottom = bounds.bottom - Math.max(...rects.map((rect) => rect.bottom));
+		this.selectionTools.toggleClass('books-selection-tools-top', top > bottom);
+	}
+
 	private setupSelectionCapture(): void {
 		const update = (): void => {
 			this.selectionCapture = this.captureSelection();
-			if (this.selectionCapture && !this.controlsPointerDown) this.showControls();
+			this.updateSelectionTools();
 			this.quoteButton.disabled = !this.selectionCapture;
 			this.copyButton.disabled = !this.selectionCapture && !this.copyTextOnPress;
 			this.updateHighlightButton();
@@ -1155,6 +1241,7 @@ export class ReaderView extends ItemView {
 		this.finishHighlightButton.setAttribute('aria-label', t('finishHighlight'));
 		this.highlightActions.hidden = false;
 		this.statusBar?.addClass('has-highlight-actions');
+		this.updateSelectionTools();
 	}
 
 	private continueHighlightOnNextPage(): void {
@@ -1184,6 +1271,7 @@ export class ReaderView extends ItemView {
 		this.highlightModeBeforeContinuation = null;
 		if (this.highlightActions) this.highlightActions.hidden = true;
 		this.statusBar?.removeClass('has-highlight-actions');
+		this.updateSelectionTools();
 		if (
 			restoreHighlightMode &&
 			previousHighlightMode !== null &&
@@ -1582,6 +1670,10 @@ export class ReaderView extends ItemView {
 			this.repaginateTimer = window.setTimeout(() => {
 				this.repaginateTimer = null;
 				if (!this.content.isConnected) return;
+				if (this.controlsPointerDown || this.hasTextSelection()) {
+					repaginate();
+					return;
+				}
 				if (this.pendingFraction !== null) {
 					this.measure();
 					return;
@@ -1621,6 +1713,7 @@ export class ReaderView extends ItemView {
 		return (
 			this.keyboardControls ||
 			this.controlsPointerDown ||
+			Boolean(this.selectionActionCapture) ||
 			this.highlightMode ||
 			this.hasTextSelection() ||
 			Boolean(this.highlightActionAnnotationId) ||
@@ -1673,8 +1766,15 @@ export class ReaderView extends ItemView {
 				if (!node.data[offset]?.trim()) continue;
 				range.setStart(node, offset);
 				range.setEnd(node, offset + 1);
-				const rect = range.getBoundingClientRect();
+				const rect = Array.from(range.getClientRects()).find(
+					(rect) =>
+						rect.width > 0 &&
+						rect.height > 0 &&
+						rect.left >= bounds.left - 1 &&
+						rect.right <= bounds.right + 1,
+				);
 				if (
+					rect &&
 					rect.left >= bounds.left - 1 &&
 					rect.right <= bounds.right + 1 &&
 					rect.top >= bounds.top &&
@@ -1694,15 +1794,20 @@ export class ReaderView extends ItemView {
 			!this.pageStride
 		)
 			return;
-		const range = boundary;
-		const offset =
-			range.getBoundingClientRect().left - this.content.getBoundingClientRect().left;
+		const rect = Array.from(boundary.getClientRects()).find(
+			(rect) => rect.width > 0 && rect.height > 0,
+		);
+		if (!rect) return;
+		const offset = rect.left - this.content.getBoundingClientRect().left;
+		if (!Number.isFinite(offset) || offset < -1 || offset >= this.totalPages * this.pageStride)
+			return;
 		this.page = clampPage(Math.floor((offset + 1) / this.pageStride), this.totalPages);
 		this.applyTransform();
 		this.updateStatus();
 	}
 
 	private setControlsVisible(visible: boolean): void {
+		if (this.controlsPointerDown || this.hasTextSelection()) return;
 		const fraction = this.pendingFraction ?? this.currentFraction();
 		const changed = this.viewport.hasClass('books-hide-ui') === visible;
 		const boundary = changed
@@ -1712,6 +1817,7 @@ export class ReaderView extends ItemView {
 			: null;
 		if (changed) this.controlsBoundary = visible ? boundary : null;
 		this.viewport.toggleClass('books-hide-ui', !visible);
+		this.updateSelectionTools();
 		// Measure real chrome, including wrapped labels and accessibility text sizes.
 		const top = this.chapterBar.offsetHeight + 12;
 		const bottom = this.statusBar.offsetHeight + 12;
@@ -1753,6 +1859,7 @@ export class ReaderView extends ItemView {
 			'pointerdown',
 			(event) => {
 				this.controlsPointerDown = true;
+				this.readingPressAt = Date.now();
 				if (!this.isInteractive(event.target)) {
 					const active = this.contentEl.ownerDocument.activeElement;
 					if (active instanceof HTMLElement && active.closest('.books-ui')) active.blur();
@@ -1766,8 +1873,11 @@ export class ReaderView extends ItemView {
 			this.registerDomEvent(this.contentEl.ownerDocument, eventName, () => {
 				if (!this.controlsPointerDown) return;
 				this.controlsPointerDown = false;
-				if (this.hasTextSelection()) this.showControls();
-				else this.scheduleControlsHide();
+				if (Date.now() - this.readingPressAt >= 300 || this.hasTextSelection()) {
+					this.suppressChromeClickUntil = Date.now() + 700;
+				}
+				this.updateSelectionTools();
+				this.scheduleControlsHide();
 			});
 		}
 		this.registerDomEvent(this.viewport, 'focusin', (event) => {
@@ -1775,12 +1885,16 @@ export class ReaderView extends ItemView {
 				this.showControls();
 		});
 		this.registerDomEvent(this.contentEl.ownerDocument, 'selectionchange', () => {
-			if (this.hasTextSelection() && !this.controlsPointerDown) this.showControls();
+			if (this.hasTextSelection()) {
+				this.suppressChromeClickUntil = Date.now() + 700;
+			}
+			this.updateSelectionTools();
 		});
 		this.scheduleControlsHide();
 	}
 
 	private toggleControls(): void {
+		if (this.hasTextSelection() || Date.now() < this.suppressChromeClickUntil) return;
 		this.booksPlugin.showImmersiveChrome(this.contentEl.ownerDocument);
 		this.showControls();
 	}
@@ -1966,7 +2080,7 @@ export class ReaderView extends ItemView {
 						return;
 					if (Math.abs(deltaY) > Math.abs(deltaX)) {
 						dragging = false;
-						this.applySettings();
+						this.applyTransform();
 						return;
 					}
 					decided = true;
@@ -2002,7 +2116,11 @@ export class ReaderView extends ItemView {
 				Math.abs(deltaY) < tapMoveThreshold &&
 				elapsed < tapTimeThreshold
 			) {
-				if (this.isCenterTap(touch.clientX) && !this.hasTextSelection()) {
+				if (
+					this.isCenterTap(touch.clientX) &&
+					!this.hasTextSelection() &&
+					Date.now() >= this.suppressChromeClickUntil
+				) {
 					this.toggleControls();
 					return;
 				}

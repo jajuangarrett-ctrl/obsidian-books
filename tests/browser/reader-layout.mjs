@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { chromium } from 'playwright-core';
+import { chromium, webkit } from 'playwright-core';
 import esbuild from 'esbuild';
 import path from 'node:path';
 import os from 'node:os';
@@ -13,7 +13,10 @@ await esbuild.build({
 });
 fs.copyFileSync('styles.css', path.join(dir, 'styles.css'));
 fs.copyFileSync('tests/browser/index.html', path.join(dir, 'index.html'));
-const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH });
+const browser =
+	process.env.BROWSER === 'webkit'
+		? await webkit.launch({ headless: true })
+		: await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
@@ -272,6 +275,7 @@ check(
 	await page.evaluate(() => !reader.viewport.classList.contains('books-hide-ui')),
 );
 await page.evaluate(() => getSelection().removeAllRanges());
+await page.locator('.books-viewport').focus();
 await page.keyboard.press('Tab');
 await page.waitForTimeout(1500);
 check(
@@ -331,6 +335,213 @@ check(
 			!reader.verticalMode &&
 			Math.abs(reader.currentFraction() - window.fallbackStart) <=
 				1 / (reader.totalPages - 1),
+	),
+);
+
+// Physical-report regression: page starts halfway through one long paragraph.
+await page.evaluate(() => {
+	getSelection().removeAllRanges();
+	document.activeElement.blur();
+	reader.keyboardControls = false;
+	reader.controlsPointerDown = false;
+	reader.dismissHighlightActions();
+	reader.setHighlightMode(false);
+	reader.setControlsVisible(false);
+	reader.content.innerHTML =
+		'<p>' +
+		Array.from(
+			{ length: 1500 },
+			(_, i) =>
+				`Sentence ${i + 1}: a quiet reader follows the river and records each discovery. `,
+		).join('') +
+		'</p>';
+	reader.measure();
+	reader.page = 8;
+	reader.content.classList.add('books-measuring');
+	reader.applyTransform();
+	reader.updateStatus();
+	reader.content.getBoundingClientRect();
+	const r = reader.visibleTextBoundary();
+	window.splitAnchor = r.cloneRange();
+	window.splitOffset = r.startOffset;
+	window.splitBefore = {
+		page: reader.page,
+		total: reader.totalPages,
+		transform: reader.content.style.transform,
+		padding: getComputedStyle(reader.content).paddingTop,
+		rect: r.getBoundingClientRect().toJSON(),
+	};
+});
+const splitPoint = await page.evaluate(() => {
+	const start = window.splitAnchor.getBoundingClientRect();
+	const end = window.splitAnchor.cloneRange();
+	end.setStart(end.startContainer, end.startOffset + 20);
+	end.setEnd(end.startContainer, end.startOffset + 1);
+	const rect = end.getBoundingClientRect();
+	return {
+		x: start.left + 1,
+		y: start.top + start.height / 2,
+		end: rect.right - 1,
+		offset: window.splitOffset,
+	};
+});
+check('fixture begins partway through long paragraph', splitPoint.offset > 1000);
+await page.evaluate((point) => {
+	const target = reader.content.querySelector('p');
+	for (const [type, y] of [
+		['touchstart', point.y],
+		['touchmove', point.y + 30],
+		['touchend', point.y + 30],
+	]) {
+		const event = new Event(type, { bubbles: true, cancelable: true });
+		const touch = { clientX: point.x, clientY: y };
+		Object.defineProperty(event, 'touches', { value: type === 'touchend' ? [] : [touch] });
+		Object.defineProperty(event, 'changedTouches', { value: [touch] });
+		target.dispatchEvent(event);
+	}
+}, splitPoint);
+check(
+	'vertical touch drift never reapplies reader settings',
+	await page.evaluate(
+		() =>
+			reader.viewport.classList.contains('books-hide-ui') &&
+			reader.page === window.splitBefore.page &&
+			reader.totalPages === window.splitBefore.total,
+	),
+);
+await page.waitForTimeout(800);
+
+await page.mouse.move(splitPoint.x, splitPoint.y);
+await page.mouse.down();
+await page.waitForTimeout(450);
+await page.mouse.move(splitPoint.end, splitPoint.y, { steps: 10 });
+await page.mouse.up();
+await page.waitForTimeout(1800);
+check(
+	'long press selection never reveals or repaginates hidden chrome',
+	await page.evaluate(
+		() =>
+			reader.viewport.classList.contains('books-hide-ui') &&
+			reader.page === window.splitBefore.page &&
+			reader.totalPages === window.splitBefore.total &&
+			reader.content.style.transform === window.splitBefore.transform &&
+			getComputedStyle(reader.content).paddingTop === window.splitBefore.padding,
+	),
+);
+check(
+	'selected top glyph stays at same screen position',
+	await page.evaluate(() => {
+		const now = window.splitAnchor.getBoundingClientRect();
+		return (
+			Math.abs(now.top - window.splitBefore.rect.top) < 1 &&
+			Math.abs(now.left - window.splitBefore.rect.left) < 1 &&
+			Boolean(reader.captureSelection()?.selectedText)
+		);
+	}),
+);
+check(
+	'non-reflow selection actions stay away from selected passage',
+	await page.evaluate(() => {
+		const box = reader.selectionTools.getBoundingClientRect();
+		const text = getSelection().getRangeAt(0).getBoundingClientRect();
+		return !reader.selectionTools.hidden && (box.top >= text.bottom || box.bottom <= text.top);
+	}),
+);
+await page.screenshot({ path: dir + '/split-paragraph-selection.png' });
+const splitSelected = await page.evaluate(() => reader.captureSelection().selectedText);
+await page.locator('.books-selection-tools button').first().click();
+check(
+	'hidden-chrome selection copy preserves exact text and page',
+	await page.evaluate(
+		(text) => window.copiedText === text && reader.page === window.splitBefore.page,
+		splitSelected,
+	),
+);
+const highlightTarget = await page.locator('.books-selection-tools button').nth(1).boundingBox();
+await page.mouse.move(
+	highlightTarget.x + highlightTarget.width / 2,
+	highlightTarget.y + highlightTarget.height / 2,
+);
+await page.mouse.down();
+// iOS can collapse native selection as a toolbar takes focus, after pointerdown.
+await page.evaluate(() => getSelection().removeAllRanges());
+await page.mouse.up();
+check(
+	'hidden-chrome highlight saves split-paragraph text without page movement',
+	await page.evaluate(
+		(text) =>
+			window.savedHighlight?.selectedText === text && reader.page === window.splitBefore.page,
+		splitSelected,
+	),
+);
+await page.evaluate(() => {
+	reader.dismissHighlightActions();
+	document.activeElement.blur();
+});
+await page.waitForTimeout(800);
+await page.mouse.click(195, 400);
+await page.waitForTimeout(100);
+check(
+	'intentional center tap keeps original split-paragraph glyph on visible page',
+	await page.evaluate(() => {
+		const r = window.splitAnchor.getBoundingClientRect(),
+			b = reader.stage.getBoundingClientRect();
+		return (
+			!reader.viewport.classList.contains('books-hide-ui') &&
+			r.left >= b.left - 1 &&
+			r.right <= b.right + 1 &&
+			r.top >= b.top &&
+			r.bottom <= b.bottom
+		);
+	}),
+);
+await page.screenshot({ path: dir + '/split-paragraph-controls.png' });
+
+await page.evaluate(() => {
+	reader.setControlsVisible(false);
+	reader.showHighlightActions(window.savedHighlight);
+	plugin.getAnnotationsForSource = () => [window.savedHighlight];
+	plugin.replaceHighlight = (a) => {
+		window.savedHighlight = a;
+		return true;
+	};
+});
+check(
+	'saved highlight continuation controls remain visible without full chrome',
+	await page.evaluate(() => {
+		const rect = reader.finishHighlightButton.getBoundingClientRect();
+		return (
+			reader.viewport.classList.contains('books-hide-ui') &&
+			!reader.selectionTools.hidden &&
+			reader.selectionTools.contains(reader.highlightActions) &&
+			document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2) ===
+				reader.finishHighlightButton
+		);
+	}),
+);
+const priorId = await page.evaluate(() => window.savedHighlight.id);
+await page.locator('.books-selection-tools .mod-cta').click();
+await page.evaluate(() => {
+	const r = reader.visibleTextBoundary();
+	r.setEnd(r.startContainer, Math.min(r.startOffset + 12, r.startContainer.length));
+	const sel = getSelection();
+	sel.removeAllRanges();
+	sel.addRange(r);
+});
+await page.waitForTimeout(100);
+await page.locator('.books-selection-tools > button').nth(1).click();
+check(
+	'selection-strip continuation extends existing highlight',
+	await page.evaluate(
+		(id) => window.savedHighlight.id === id && reader.continuingHighlightId === null,
+		priorId,
+	),
+);
+await page.locator('.books-selection-tools .books-highlight-action-button:not(.mod-cta)').click();
+check(
+	'finish closes non-reflow highlight actions',
+	await page.evaluate(
+		() => reader.highlightActionAnnotationId === null && reader.selectionTools.hidden,
 	),
 );
 
