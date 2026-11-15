@@ -17,13 +17,13 @@ import { clampFraction } from './reader/pagination';
 
 export const DEFAULT_SETTINGS: ReaderSettings = {
 	fontSize: 1,
-	fontFamily: 'theme',
-	lineHeight: 1.6,
+	fontFamily: 'serif',
+	lineHeight: 1.45,
 	paragraphSpacing: 0.75,
 	pageMode: 'auto',
 	maxPageWidth: 600,
-	pageMargin: 24,
-	columnGap: 2.5,
+	pageMargin: 16,
+	columnGap: 1.5,
 	appearance: 'theme',
 	transition: 'slide',
 	tapZones: true,
@@ -31,6 +31,7 @@ export const DEFAULT_SETTINGS: ReaderSettings = {
 	showTitle: true,
 	openIn: 'new-tab',
 	immersive: true,
+	autoHideControls: true,
 	quoteDestination: 'single-note',
 	quotesNotePath: 'Obsidian Books/Quotes.md',
 	annotationsFolder: 'Obsidian Books/Annotations',
@@ -109,6 +110,10 @@ export function normalizeSettings(value: unknown): ReaderSettings {
 			DEFAULT_SETTINGS.openIn,
 		),
 		immersive: booleanSetting(candidate.immersive, DEFAULT_SETTINGS.immersive),
+		autoHideControls: booleanSetting(
+			candidate.autoHideControls,
+			DEFAULT_SETTINGS.autoHideControls,
+		),
 		quoteDestination: enumSetting<QuoteDestination>(
 			candidate.quoteDestination,
 			['single-note', 'per-book', 'folder'],

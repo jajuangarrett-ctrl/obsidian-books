@@ -1014,3 +1014,46 @@ body.books-immersive.books-chrome-hidden .status-bar {
 	font-size: 16px;
 	opacity: 0;
 }
+
+/* Reading canvas keeps its geometry when chrome fades, so no text jumps. */
+.books-auto-hide .books-content {
+	padding: max(16px, env(safe-area-inset-top)) 0 max(30px, env(safe-area-inset-bottom));
+}
+.books-auto-hide .books-statusbar {
+	position: absolute;
+	bottom: 0;
+}
+.books-auto-hide .books-chapterbar {
+	width: calc(100% - 24px);
+}
+.books-auto-hide .books-ui {
+	background-color: var(--books-surface, var(--background-primary));
+}
+.books-auto-hide.books-hide-ui .books-ui {
+	opacity: 0;
+	pointer-events: none;
+}
+.books-auto-hide.books-hide-ui .books-ui:focus-within {
+	opacity: 1;
+	pointer-events: auto;
+}
+.books-page-numbers {
+	position: absolute;
+	bottom: max(6px, env(safe-area-inset-bottom));
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	pointer-events: none;
+	font-size: 11px;
+	color: var(--books-muted, var(--text-muted));
+}
+.books-page-numbers span {
+	flex: 1;
+	text-align: center;
+}
+.books-vertical-mode .books-page-numbers {
+	display: none;
+}
+.books-auto-hide.books-vertical-mode .books-statusbar {
+	position: sticky;
+}

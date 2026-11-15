@@ -21,6 +21,7 @@ export interface ReaderSettings {
 	showTitle: boolean;
 	openIn: OpenMode;
 	immersive: boolean;
+	autoHideControls: boolean;
 	quoteDestination: QuoteDestination;
 	quotesNotePath: string;
 	annotationsFolder: string;

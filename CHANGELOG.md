@@ -4,6 +4,19 @@ All notable changes to Obsidian Books will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-11-15
+
+### Improved
+
+- Mobile landscape now supports two-page book spreads based on reader pane dimensions,
+  with single-page portrait, narrow-pane and large-type safeguards.
+- Compact reading canvas, new-install serif typography and smaller margins/gutter;
+  existing saved typography and annotation data are retained.
+- Reading controls auto-hide after three idle seconds without shifting text; center
+  taps reveal controls and host navigation without turning the page. Selection,
+  menus and keyboard use stay accessible; an auto-hide setting provides an opt-out.
+- Quiet individual page numbers remain visible in reading mode.
+
 ## [0.2.6] - 2026-10-10
 
 ### Fixed

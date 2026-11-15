@@ -86,3 +86,42 @@ describe('normalized reading positions', () => {
 		expect(clampPage(12, 9)).toBe(8);
 	});
 });
+
+describe('pane-based book spreads', () => {
+	const base = {
+		columnGap: 24,
+		outerMargin: 16,
+		pageMode: 'auto' as const,
+		isDesktop: false,
+		maxPageWidth: 600,
+		fontSize: 16,
+	};
+	it('uses portrait single page and landscape two pages on mobile', () => {
+		expect(
+			calculateGeometry({ ...base, viewportWidth: 390, viewportHeight: 760 }).pageCount,
+		).toBe(1);
+		expect(
+			calculateGeometry({ ...base, viewportWidth: 844, viewportHeight: 390 }).pageCount,
+		).toBe(2);
+		expect(
+			calculateGeometry({ ...base, viewportWidth: 1024, viewportHeight: 1366 }).pageCount,
+		).toBe(1);
+	});
+	it('protects narrow panes and large type, preserving explicit single page', () => {
+		expect(
+			calculateGeometry({ ...base, viewportWidth: 540, viewportHeight: 350 }).pageCount,
+		).toBe(1);
+		expect(
+			calculateGeometry({ ...base, viewportWidth: 844, viewportHeight: 390, fontSize: 32 })
+				.pageCount,
+		).toBe(1);
+		expect(
+			calculateGeometry({
+				...base,
+				viewportWidth: 844,
+				viewportHeight: 390,
+				pageMode: 'single',
+			}).pageCount,
+		).toBe(1);
+	});
+});

@@ -29,6 +29,20 @@ export class ReaderSettingTab extends PluginSettingTab {
 			this.booksPlugin.refreshOpenViews();
 		};
 
+		new Setting(containerEl)
+			.setName('Auto-hide reading controls')
+			.setDesc(
+				'Hide controls after three seconds. Tap the middle of the page or press a key to show them. Disable to keep controls visible.',
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.booksPlugin.settings.autoHideControls)
+					.onChange(async (value) => {
+						this.booksPlugin.settings.autoHideControls = value;
+						await save();
+					}),
+			);
+
 		new Setting(containerEl).setName(t('appearance')).addDropdown((dropdown) =>
 			dropdown
 				.addOptions({

@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-books",
-	"version": "0.2.6",
+	"version": "0.2.7",
 	"description": "Apple Books-inspired Markdown ebook reader for Obsidian, based on MD Reader.",
 	"main": "main.js",
 	"type": "module",
@@ -13,7 +13,8 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"validate": "npm run format:check && npm run lint && npm test && npm run build",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
+		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"test:browser": "node tests/browser/reader-layout.mjs"
 	},
 	"keywords": [
 		"obsidian",
@@ -33,6 +34,7 @@
 		"globals": "^17.6.0",
 		"jiti": "^2.6.1",
 		"obsidian": "1.13.1",
+		"playwright-core": "^1.65.1",
 		"prettier": "^3.9.6",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.59.1",

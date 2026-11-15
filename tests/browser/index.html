@@ -1,0 +1,40 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="styles.css" />
+		<style>
+			:root {
+				--background-primary: #111;
+				--text-normal: #ddd;
+				--text-muted: #999;
+				--interactive-accent: #7ad;
+				--font-text-size: 16px;
+				--font-text: Georgia;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				background: #111;
+				color: #ddd;
+				font: 16px Georgia;
+			}
+			#root {
+				width: 100vw;
+				height: 100vh;
+			}
+			button {
+				color: #ddd;
+				background: #222;
+				border: 1px solid #555;
+			}
+			p {
+				margin-top: 0;
+			}
+		</style>
+	</head>
+	<body class="is-mobile books-immersive books-chrome-hidden">
+		<div id="root"></div>
+		<script type="module" src="bundle.js"></script>
+	</body>
+</html>

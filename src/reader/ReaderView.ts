@@ -87,6 +87,11 @@ export class ReaderView extends ItemView {
 	private book: BookRecord | null = null;
 	private bookId: string | null = null;
 	private page = 0;
+	private visibleColumns: 1 | 2 = 1;
+	private totalColumns = 1;
+	private pageNumbers!: HTMLElement;
+	private controlsTimer: number | null = null;
+	private keyboardControls = false;
 	private totalPages = 1;
 	private pageStride = 0;
 	private columnGap = 0;
@@ -249,6 +254,9 @@ export class ReaderView extends ItemView {
 		this.content = this.stage.createDiv({ cls: 'books-content markdown-rendered' });
 		this.content.setAttribute('role', 'article');
 
+		this.pageNumbers = this.viewport.createDiv({ cls: 'books-page-numbers' });
+		this.pageNumbers.setAttribute('aria-hidden', 'true');
+
 		this.statusBar = this.viewport.createDiv({ cls: 'books-statusbar books-ui' });
 		const navigation = this.statusBar.createDiv({ cls: 'books-footer-navigation' });
 		this.previousButton = navigation.createEl('button', {
@@ -386,6 +394,7 @@ export class ReaderView extends ItemView {
 		this.registerDomEvent(this.viewport, 'focusin', () => this.pushScope());
 		this.registerDomEvent(this.viewport, 'focusout', () => this.popScope());
 
+		this.setupAutoHide();
 		this.setupInput();
 		this.setupSelectionCapture();
 		this.setupHighlightGesture();
@@ -395,6 +404,7 @@ export class ReaderView extends ItemView {
 	}
 
 	public async onClose(): Promise<void> {
+		if (this.controlsTimer !== null) window.clearTimeout(this.controlsTimer);
 		this.setHighlightMode(false);
 		this.popScope();
 		this.resizeObserver?.disconnect();
@@ -496,6 +506,8 @@ export class ReaderView extends ItemView {
 	public applySettings(): void {
 		if (!this.content) return;
 		const settings = this.booksPlugin.settings;
+		this.viewport.toggleClass('books-auto-hide', settings.autoHideControls);
+		this.showControls();
 		this.content.style.setProperty('--books-font-size', `${settings.fontSize}em`);
 		this.content.style.setProperty('--books-line-height', String(settings.lineHeight));
 		this.content.style.setProperty(
@@ -578,6 +590,8 @@ export class ReaderView extends ItemView {
 			Number.parseFloat(this.content.win.getComputedStyle(this.content).columnGap) || 0;
 		const geometry = calculateGeometry({
 			viewportWidth,
+			viewportHeight: this.viewport.clientHeight,
+			fontSize: Number.parseFloat(this.content.win.getComputedStyle(this.content).fontSize),
 			columnGap: computedGap,
 			outerMargin: this.booksPlugin.settings.pageMargin,
 			pageMode: this.booksPlugin.settings.pageMode,
@@ -585,6 +599,8 @@ export class ReaderView extends ItemView {
 			maxPageWidth: this.booksPlugin.settings.maxPageWidth,
 		});
 
+		this.visibleColumns = geometry.pageCount;
+		this.pageNumbers.style.width = `${geometry.stageWidth}px`;
 		this.stage.style.width = `${geometry.stageWidth}px`;
 		this.stage.toggleClass('books-two-page', geometry.pageCount === 2);
 		this.content.style.width = `${geometry.stageWidth}px`;
@@ -600,6 +616,12 @@ export class ReaderView extends ItemView {
 		this.content.setCssProps({ transform: 'none' });
 		this.alignmentOffset =
 			this.stage.getBoundingClientRect().left - this.content.getBoundingClientRect().left;
+		this.totalColumns = Math.max(
+			1,
+			Math.round(
+				(this.content.scrollWidth + computedGap) / (geometry.pageWidth + computedGap),
+			),
+		);
 		this.totalPages = calculateTotalPages(
 			this.content.scrollWidth,
 			this.columnGap,
@@ -624,7 +646,9 @@ export class ReaderView extends ItemView {
 	private detectVerticalFallback(): boolean {
 		const availableHeight = Math.max(
 			1,
-			this.viewport.clientHeight - this.statusBar.offsetHeight - 110,
+			this.booksPlugin.settings.autoHideControls
+				? this.viewport.clientHeight - 46
+				: this.viewport.clientHeight - this.statusBar.offsetHeight - 110,
 		);
 		const blocks: FallbackBlockMeasurement[] = [];
 		const seen = new Set<Element>();
@@ -798,7 +822,17 @@ export class ReaderView extends ItemView {
 	}
 
 	private updateStatus(): void {
+		this.pageNumbers.empty();
+		if (!this.verticalMode) {
+			for (let column = 0; column < this.visibleColumns; column++) {
+				const number = this.page * this.visibleColumns + column + 1;
+				this.pageNumbers.createSpan({
+					text: number <= this.totalColumns ? String(number) : '',
+				});
+			}
+		}
 		const current = this.page + 1;
+		const displayedPage = this.page * this.visibleColumns + 1;
 		const chapterIndex = this.currentChapterIndex();
 		const fraction = this.currentFraction();
 		const label = this.verticalMode
@@ -807,10 +841,10 @@ export class ReaderView extends ItemView {
 				? chapterStatus(
 						chapterIndex + 1,
 						this.book.chapters.length,
-						current,
-						this.totalPages,
+						displayedPage,
+						this.totalColumns,
 					)
-				: pageStatus(current, this.totalPages);
+				: pageStatus(displayedPage, this.totalColumns);
 		const remainingPages = this.verticalMode
 			? Math.max(0.01, 1 - fraction)
 			: Math.max(1, this.totalPages - this.page);
@@ -1557,12 +1591,81 @@ export class ReaderView extends ItemView {
 		});
 	}
 
+	private controlsBusy(): boolean {
+		const doc = this.contentEl.ownerDocument;
+		const focused = doc.activeElement;
+		return (
+			this.keyboardControls ||
+			this.highlightMode ||
+			this.hasTextSelection() ||
+			Boolean(this.highlightActionAnnotationId) ||
+			Boolean(doc.querySelector('.modal-container, .menu')) ||
+			Boolean(focused instanceof Element && focused.closest('.books-ui'))
+		);
+	}
+
+	private scheduleControlsHide(): void {
+		if (this.controlsTimer !== null) window.clearTimeout(this.controlsTimer);
+		if (!this.booksPlugin.settings.autoHideControls) return;
+		this.controlsTimer = window.setTimeout(() => {
+			this.controlsTimer = null;
+			if (!this.viewport.isConnected) return;
+			if (this.controlsBusy()) {
+				this.scheduleControlsHide();
+				return;
+			}
+			this.viewport.addClass('books-hide-ui');
+			if (
+				this.booksPlugin.settings.immersive &&
+				this.app.workspace.activeLeaf === this.leaf
+			) {
+				this.booksPlugin.applyImmersive(this.leaf);
+			}
+		}, 3000);
+	}
+
+	private showControls(): void {
+		this.viewport.removeClass('books-hide-ui');
+		this.scheduleControlsHide();
+	}
+
+	private setupAutoHide(): void {
+		this.viewport.addClass('books-auto-hide');
+		this.registerDomEvent(
+			this.viewport,
+			'keydown',
+			() => {
+				this.keyboardControls = true;
+				this.showControls();
+			},
+			{ capture: true },
+		);
+		this.registerDomEvent(
+			this.viewport,
+			'pointerdown',
+			(event) => {
+				if (!this.isInteractive(event.target)) {
+					const active = this.contentEl.ownerDocument.activeElement;
+					if (active instanceof HTMLElement && active.closest('.books-ui')) active.blur();
+				}
+				this.keyboardControls = false;
+				this.scheduleControlsHide();
+			},
+			{ capture: true },
+		);
+		this.registerDomEvent(this.viewport, 'focusin', (event) => {
+			if (event.target instanceof Element && event.target.closest('.books-ui'))
+				this.showControls();
+		});
+		this.registerDomEvent(this.contentEl.ownerDocument, 'selectionchange', () => {
+			if (this.hasTextSelection()) this.showControls();
+		});
+		this.scheduleControlsHide();
+	}
+
 	private toggleControls(): void {
-		if (this.booksPlugin.settings.immersive) {
-			this.booksPlugin.toggleImmersiveChrome(this.contentEl.ownerDocument);
-		} else {
-			this.viewport.toggleClass('books-hide-ui', !this.viewport.hasClass('books-hide-ui'));
-		}
+		this.booksPlugin.showImmersiveChrome(this.contentEl.ownerDocument);
+		this.showControls();
 	}
 
 	private exitReadingChrome(): void {
@@ -1782,6 +1885,10 @@ export class ReaderView extends ItemView {
 				Math.abs(deltaY) < tapMoveThreshold &&
 				elapsed < tapTimeThreshold
 			) {
+				if (this.isCenterTap(touch.clientX) && !this.hasTextSelection()) {
+					this.toggleControls();
+					return;
+				}
 				if (
 					this.hasTextSelection() ||
 					(event.target instanceof Node && this.content.contains(event.target)) ||
@@ -1830,6 +1937,14 @@ export class ReaderView extends ItemView {
 				return;
 			}
 			if (
+				this.isCenterTap(event.clientX) &&
+				!this.isInteractive(event.target) &&
+				!this.isScrollable(event.target)
+			) {
+				this.toggleControls();
+				return;
+			}
+			if (
 				this.isInteractive(event.target) ||
 				this.isScrollable(event.target) ||
 				this.hasTextSelection() ||
@@ -1848,6 +1963,11 @@ export class ReaderView extends ItemView {
 		});
 
 		if (Platform.isDesktop) this.setupWheelInput();
+	}
+
+	private isCenterTap(clientX: number): boolean {
+		const x = clientX - this.viewport.getBoundingClientRect().left;
+		return x >= this.viewport.clientWidth * 0.3 && x <= this.viewport.clientWidth * 0.7;
 	}
 
 	private handleTap(clientX: number): void {

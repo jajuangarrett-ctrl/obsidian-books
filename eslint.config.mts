@@ -6,6 +6,8 @@ export default defineConfig(
 	globalIgnores([
 		'node_modules',
 		'coverage',
+		// Browser host shims deliberately implement Obsidian APIs with native DOM.
+		'tests/browser/**',
 		'esbuild.config.mjs',
 		'version-bump.mjs',
 		'versions.json',

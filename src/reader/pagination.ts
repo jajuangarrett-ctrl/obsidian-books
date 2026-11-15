@@ -2,6 +2,8 @@ import type { PageMode } from '../types';
 
 export interface PaginationInput {
 	viewportWidth: number;
+	viewportHeight?: number;
+	fontSize?: number;
 	columnGap: number;
 	outerMargin: number;
 	pageMode: PageMode;
@@ -44,10 +46,16 @@ export function calculateGeometry(input: PaginationInput): PaginationGeometry {
 
 	let pageCount: 1 | 2 = 1;
 	if (input.pageMode === 'double') pageCount = 2;
-	else if (input.pageMode === 'auto' && input.isDesktop && viewportWidth >= 820) pageCount = 2;
+	else if (
+		input.pageMode === 'auto' &&
+		(input.viewportHeight !== undefined
+			? viewportWidth > input.viewportHeight
+			: input.isDesktop && viewportWidth >= 820)
+	)
+		pageCount = 2;
 
 	let pageWidth = (available - gap * (pageCount - 1)) / pageCount;
-	if (pageCount === 2 && pageWidth < 260) {
+	if (pageCount === 2 && pageWidth < Math.max(260, (input.fontSize ?? 16) * 17)) {
 		pageCount = 1;
 		pageWidth = available;
 	}
